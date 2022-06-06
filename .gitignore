@@ -11,3 +11,8 @@ CTestTestfile.cmake
 _deps
 /.vs
 /snapshots
+/bin
+/include/linux/gfx
+/include/windows
+/lib
+/obj
