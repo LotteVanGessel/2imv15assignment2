@@ -1,7 +1,11 @@
+#include <iostream>
+#include <typeinfo>
 #define IX(i,j) ((i)+(N+2)*(j))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
 #define FOR_EACH_CELL for ( i=1 ; i<=N ; i++ ) { for ( j=1 ; j<=N ; j++ ) {
 #define END_FOR }}
+
+using namespace std;
 
 void add_source(int N, float* x, float* s, float dt)
 {
@@ -50,7 +54,7 @@ void advect(int N, int b, float* d, float* d0, float* u, float* v, float dt)
 
 	dt0 = dt * N;
 	FOR_EACH_CELL
-		x = i - dt0 * u[IX(i, j)]; y = j - dt0 * v[IX(i, j)];
+	x = i - dt0 * u[IX(i, j)]; y = j - dt0 * v[IX(i, j)];
 	if (x < 0.5f) x = 0.5f; if (x > N + 0.5f) x = N + 0.5f; i0 = (int)x; i1 = i0 + 1;
 	if (y < 0.5f) y = 0.5f; if (y > N + 0.5f) y = N + 0.5f; j0 = (int)y; j1 = j0 + 1;
 	s1 = x - i0; s0 = 1 - s1; t1 = y - j0; t0 = 1 - t1;
@@ -86,14 +90,40 @@ void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float
 	SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 
+void vorticity(int N, float* u, float* v)
+{
+	int i, j;
+	float* vor;
+	float* diffvorx;
+	float* diffvory;
+	int size = (N + 2) * (N + 2);
+
+	vor = (float*)malloc(size * sizeof(float));
+	diffvorx = (float*)malloc(size * sizeof(float));
+	diffvory = (float*)malloc(size * sizeof(float));
+	FOR_EACH_CELL
+		//2D vorticity always points at the z direction
+		vor[IX(i, j)] = v[IX(i, j)] - v[IX(i - 1,j)] - u[IX(i, j)] + u[IX(i, j - 1)];
+	END_FOR
+	FOR_EACH_CELL
+		diffvorx[IX(i, j)] = 1 / N * (vor[IX(i, j)] - vor[IX(i + 1, j)]) * 0.1;
+		diffvory[IX(i, j)] = 1 / N * (vor[IX(i, j)] - vor[IX(i, j + 1)]) * 0.1;
+		u[IX(i, j)] += diffvorx[IX(i, j)];
+		v[IX(i, j)] += diffvory[IX(i, j)];
+	END_FOR
+}
+
 void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt)
 {
 	add_source(N, u, u0, dt); add_source(N, v, v0, dt);
 	SWAP(u0, u); diffuse(N, 1, u, u0, visc, dt);
 	SWAP(v0, v); diffuse(N, 2, v, v0, visc, dt);
+	vorticity(N, u, v);
 	project(N, u, v, u0, v0);
 	SWAP(u0, u); SWAP(v0, v);
 	advect(N, 1, u, u0, u0, v0, dt); advect(N, 2, v, v0, u0, v0, dt);
 	project(N, u, v, u0, v0);
+	
 }
+
 
