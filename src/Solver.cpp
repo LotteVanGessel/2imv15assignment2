@@ -1,9 +1,11 @@
 #include <iostream>
 #include <typeinfo>
+#include <math.h>
 #define IX(i,j) ((i)+(N+2)*(j))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
 #define FOR_EACH_CELL for ( i=1 ; i<=N ; i++ ) { for ( j=1 ; j<=N ; j++ ) {
 #define END_FOR }}
+#define FOR_EACH_CELL_EXCEPT_PERIMETER for ( i=2 ; i<N ; i++ ) { for ( j=2 ; j<N ; j++ ) {
 
 using namespace std;
 
@@ -93,19 +95,27 @@ void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float
 void vorticity(int N, float* u, float* v, float * vor, float* diffvorx, float* diffvory)
 {
 	int i, j;
+
+	//2D vorticity always points at the z direction
 	FOR_EACH_CELL
-		//2D vorticity always points at the z direction
 		vor[IX(i, j)] = u[IX(i, j + 1)] - u[IX(i, j - 1)] - v[IX(i + 1, j)] + v[IX(i - 1, j)];
 	END_FOR
-	FOR_EACH_CELL
-		diffvorx[IX(i, j)] = (vor[IX(i + 1, j)] - vor[IX(i - 1, j)]);
-		diffvory[IX(i, j)] = (vor[IX(i, j + 1)] - vor[IX(i, j - 1)]);
-	END_FOR
-	float grid = 1.0 / N;
-	//std::cout << diffvory[33] * 100 / u[333]<< std::endl;
-	FOR_EACH_CELL
-		u[IX(i, j)] += diffvory[IX(i, j)] * vor[IX(i, j)] * grid * 20;
-		v[IX(i, j)] -= diffvorx[IX(i, j)] * vor[IX(i, j)] * grid * 20;
+
+	float dwdx;
+	float dwdy;
+	float total;
+
+	FOR_EACH_CELL_EXCEPT_PERIMETER
+		dwdx = (vor[IX(i + 1, j)] - vor[IX(i - 1, j)]);
+		dwdy = (vor[IX(i, j + 1)] - vor[IX(i, j - 1)]);
+		total = sqrt(pow(dwdx, 2) + pow(dwdy,2));
+		if (total != 0.0)
+		{
+			dwdx /= total;
+			dwdy /= total;
+		}
+		u[IX(i, j)] += dwdy * vor[IX(i, j)] * 0.00001;
+		v[IX(i, j)] -= dwdx * vor[IX(i, j)] * 0.00001;
 	END_FOR
 }
 
