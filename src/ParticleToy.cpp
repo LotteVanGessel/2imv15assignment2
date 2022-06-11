@@ -21,6 +21,7 @@
 /* macros */
 
 #define IX(i,j) ((i)+(N+2)*(j))
+#define DEBUG_DRAWING
 
 /* external definitions (from solver.c) */
 
@@ -33,6 +34,7 @@ static int N;
 static float dt, diff, visc;
 static float force, source;
 static int dvel;
+static int dgrid; // draw grid
 
 static float* u, * v, * u_prev, * v_prev;
 static float* dens, * dens_prev;
@@ -41,6 +43,8 @@ static int win_id;
 static int win_x, win_y;
 static int mouse_down[3];
 static int omx, omy, mx, my;
+
+static float current_time;
 
 
 /*
@@ -135,6 +139,32 @@ static void draw_velocity(void)
 	glEnd();
 }
 
+static void draw_gridlines(void){
+	int i;
+	float t, h;
+	h = 1.0f / N;
+
+	glColor3f(0.5f, 0.5f, 0.5f);
+	glLineWidth(1.0f);
+
+	glBegin(GL_LINES);
+
+	for (i = 0; i <= N+1; i++){
+		t = (i-1)*h;
+
+
+		// horizontal lines
+		glVertex2f(0.0f, t);
+		glVertex2f(1.0f, t);
+
+		// vertizontal lines
+		glVertex2f(t, 0.0f);
+		glVertex2f(t, 1.0f);
+	}
+
+	glEnd();
+}
+
 static void draw_density(void)
 {
 	int i, j;
@@ -144,20 +174,33 @@ static void draw_density(void)
 
 	glBegin(GL_QUADS);
 
-	for (i = 0; i <= N; i++) {
-		x = (i - 0.5f) * h;
-		for (j = 0; j <= N; j++) {
-			y = (j - 0.5f) * h;
+	for (i = 0; i <= N+1; i++) {
+		#ifdef DEBUG_DRAWING
+			x = (i-1) * h;
+		#else
+			x = (i - 0.5f) * h;
+		#endif
+		for (j = 0; j <= N+1; j++) {
+			#ifdef DEBUG_DRAWING
+				y = (j-1)*h;
+				d00 = dens[IX(i, j)];
+				glColor3f(d00, d00, d00); glVertex2f(x, y);
+				glColor3f(d00, d00, d00); glVertex2f(x + h, y);
+				glColor3f(d00, d00, d00); glVertex2f(x + h, y + h);
+				glColor3f(d00, d00, d00); glVertex2f(x, y + h);
+			#else
+				y = (j - 0.5f) * h;
 
-			d00 = dens[IX(i, j)];
-			d01 = dens[IX(i, j + 1)];
-			d10 = dens[IX(i + 1, j)];
-			d11 = dens[IX(i + 1, j + 1)];
+				d00 = dens[IX(i, j)];
+				d01 = dens[IX(i, j + 1)];
+				d10 = dens[IX(i + 1, j)];
+				d11 = dens[IX(i + 1, j + 1)];
 
-			glColor3f(d00, d00, d00); glVertex2f(x, y);
-			glColor3f(d10, d10, d10); glVertex2f(x + h, y);
-			glColor3f(d11, d11, d11); glVertex2f(x + h, y + h);
-			glColor3f(d01, d01, d01); glVertex2f(x, y + h);
+				glColor3f(d00, d00, d00); glVertex2f(x, y);
+				glColor3f(d10, d10, d10); glVertex2f(x + h, y);
+				glColor3f(d11, d11, d11); glVertex2f(x + h, y + h);
+				glColor3f(d01, d01, d01); glVertex2f(x, y + h);
+			#endif
 		}
 	}
 
@@ -213,6 +256,7 @@ static void key_func(unsigned char key, int x, int y)
 	case 'c':
 	case 'C':
 		clear_data();
+		current_time = 0;
 		break;
 
 	case 'q':
@@ -224,6 +268,11 @@ static void key_func(unsigned char key, int x, int y)
 	case 'v':
 	case 'V':
 		dvel = !dvel;
+		break;
+
+	case 'g':
+	case 'G':
+		dgrid = !dgrid;
 		break;
 	}
 }
@@ -257,17 +306,26 @@ static void idle_func(void)
 	vel_step(N, u, v, u_prev, v_prev, visc, dt);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
 
+	// Count time
+	current_time += dt;
+
 	glutSetWindow(win_id);
 	glutPostRedisplay();
 }
 
+static char *title_buff = (char *) malloc(sizeof(char) * 1024);
 static void display_func(void)
 {
 	pre_display();
 
 	if (dvel) draw_velocity();
 	else		draw_density();
-
+	if (dgrid) draw_gridlines();
+	
+	//update title
+    sprintf(title_buff, "Assignment 2 - t: %.3f", current_time);
+    glutSetWindowTitle(title_buff);
+	
 	post_display();
 }
 
@@ -327,7 +385,7 @@ int main(int argc, char** argv)
 
 	if (argc == 1) {
 		N = 64;
-		dt = 0.1f;
+		dt = 0.01f;
 		diff = 0.0f;
 		visc = 0.0f;
 		force = 5.0f;
@@ -352,6 +410,7 @@ int main(int argc, char** argv)
 	printf("\t Quit by pressing the 'q' key\n");
 
 	dvel = 0;
+	dgrid = 0;
 
 	if (!allocate_data()) exit(1);
 	clear_data();
