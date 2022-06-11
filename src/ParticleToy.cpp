@@ -25,7 +25,7 @@
 /* external definitions (from solver.c) */
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
-extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt);
+extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, float* diffvorx, float* diffvory);
 
 /* global variables */
 
@@ -36,6 +36,7 @@ static int dvel;
 
 static float* u, * v, * u_prev, * v_prev;
 static float* dens, * dens_prev;
+static float* vor, * diffvorx, * diffvory;
 
 static int win_id;
 static int win_x, win_y;
@@ -50,6 +51,7 @@ static int omx, omy, mx, my;
 */
 
 
+
 static void free_data(void)
 {
 	if (u) free(u);
@@ -58,6 +60,9 @@ static void free_data(void)
 	if (v_prev) free(v_prev);
 	if (dens) free(dens);
 	if (dens_prev) free(dens_prev);
+	if (vor) free(vor);
+	if (diffvorx) free(diffvorx);
+	if (diffvory) free(diffvory);
 }
 
 static void clear_data(void)
@@ -79,8 +84,11 @@ static int allocate_data(void)
 	v_prev = (float*)malloc(size * sizeof(float));
 	dens = (float*)malloc(size * sizeof(float));
 	dens_prev = (float*)malloc(size * sizeof(float));
+	vor = (float*)malloc(size * sizeof(float));
+	diffvorx = (float*)malloc(size * sizeof(float));
+	diffvory = (float*)malloc(size * sizeof(float));
 
-	if (!u || !v || !u_prev || !v_prev || !dens || !dens_prev) {
+	if (!u || !v || !u_prev || !v_prev || !dens || !dens_prev || !diffvorx || !diffvory || !vor) {
 		fprintf(stderr, "cannot allocate data\n");
 		return (0);
 	}
@@ -254,7 +262,7 @@ static void reshape_func(int width, int height)
 static void idle_func(void)
 {
 	get_from_UI(dens_prev, u_prev, v_prev);
-	vel_step(N, u, v, u_prev, v_prev, visc, dt);
+	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor, diffvorx, diffvory);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
 
 	glutSetWindow(win_id);

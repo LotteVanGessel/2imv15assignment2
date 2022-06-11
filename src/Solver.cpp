@@ -90,39 +90,35 @@ void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float
 	SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 
-void vorticity(int N, float* u, float* v)
+void vorticity(int N, float* u, float* v, float * vor, float* diffvorx, float* diffvory)
 {
 	int i, j;
-	float* vor;
-	float* diffvorx;
-	float* diffvory;
-	int size = (N + 2) * (N + 2);
-
-	vor = (float*)malloc(size * sizeof(float));
-	diffvorx = (float*)malloc(size * sizeof(float));
-	diffvory = (float*)malloc(size * sizeof(float));
 	FOR_EACH_CELL
 		//2D vorticity always points at the z direction
-		vor[IX(i, j)] = v[IX(i, j)] - v[IX(i - 1,j)] - u[IX(i, j)] + u[IX(i, j - 1)];
+		vor[IX(i, j)] = u[IX(i, j + 1)] - u[IX(i, j - 1)] - v[IX(i + 1, j)] + v[IX(i - 1, j)];
 	END_FOR
 	FOR_EACH_CELL
-		diffvorx[IX(i, j)] = 1 / N * (vor[IX(i, j)] - vor[IX(i + 1, j)]) * 0.1;
-		diffvory[IX(i, j)] = 1 / N * (vor[IX(i, j)] - vor[IX(i, j + 1)]) * 0.1;
-		u[IX(i, j)] += diffvorx[IX(i, j)];
-		v[IX(i, j)] += diffvory[IX(i, j)];
+		diffvorx[IX(i, j)] = (vor[IX(i + 1, j)] - vor[IX(i - 1, j)]);
+		diffvory[IX(i, j)] = (vor[IX(i, j + 1)] - vor[IX(i, j - 1)]);
+	END_FOR
+	float grid = 1.0 / N;
+	//std::cout << diffvory[33] * 100 / u[333]<< std::endl;
+	FOR_EACH_CELL
+		u[IX(i, j)] += diffvory[IX(i, j)] * vor[IX(i, j)] * grid * 20;
+		v[IX(i, j)] -= diffvorx[IX(i, j)] * vor[IX(i, j)] * grid * 20;
 	END_FOR
 }
 
-void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt)
+void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, float* diffvorx, float* diffvory)
 {
 	add_source(N, u, u0, dt); add_source(N, v, v0, dt);
 	SWAP(u0, u); diffuse(N, 1, u, u0, visc, dt);
 	SWAP(v0, v); diffuse(N, 2, v, v0, visc, dt);
-	vorticity(N, u, v);
 	project(N, u, v, u0, v0);
 	SWAP(u0, u); SWAP(v0, v);
 	advect(N, 1, u, u0, u0, v0, dt); advect(N, 2, v, v0, u0, v0, dt);
 	project(N, u, v, u0, v0);
+	vorticity(N, u, v, vor, diffvorx, diffvory);
 	
 }
 
