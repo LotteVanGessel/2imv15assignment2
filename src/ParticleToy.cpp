@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
+#include <iostream>
+#include <vector>
+#include <tuple>
 
 /* macros */
 
@@ -26,8 +29,8 @@
 /* external definitions (from solver.c) */
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
-extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, float* diffvorx, float* diffvory);
-
+extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
+//extern void set_bound(std::vector<std::tuple<int, int>> edges, int N, int b, float* mat);
 /* global variables */
 
 static int N;
@@ -37,8 +40,10 @@ static int dvel;
 static int dgrid; // draw grid
 
 static float* u, * v, * u_prev, * v_prev;
+static int cenX, cenY, diffX, diffY;
 static float* dens, * dens_prev;
-static float* vor, * diffvorx, * diffvory;
+static float* vor;
+std::vector<std::tuple<int, int>> edges;
 
 static int win_id;
 static int win_x, win_y;
@@ -56,6 +61,7 @@ static float current_time;
 
 
 
+
 static void free_data(void)
 {
 	if (u) free(u);
@@ -65,8 +71,6 @@ static void free_data(void)
 	if (dens) free(dens);
 	if (dens_prev) free(dens_prev);
 	if (vor) free(vor);
-	if (diffvorx) free(diffvorx);
-	if (diffvory) free(diffvory);
 }
 
 static void clear_data(void)
@@ -89,10 +93,8 @@ static int allocate_data(void)
 	dens = (float*)malloc(size * sizeof(float));
 	dens_prev = (float*)malloc(size * sizeof(float));
 	vor = (float*)malloc(size * sizeof(float));
-	diffvorx = (float*)malloc(size * sizeof(float));
-	diffvory = (float*)malloc(size * sizeof(float));
 
-	if (!u || !v || !u_prev || !v_prev || !dens || !dens_prev || !diffvorx || !diffvory || !vor) {
+	if (!u || !v || !u_prev || !v_prev || !dens || !dens_prev || !vor) {
 		fprintf(stderr, "cannot allocate data\n");
 		return (0);
 	}
@@ -232,7 +234,7 @@ static void get_from_UI(float* d, float* u, float* v)
 	if (!mouse_down[0] && !mouse_down[2]) return;
 
 	i = (int)((mx / (float)win_x) * N + 1);
-	j = (int)(((win_y - my) / (float)win_y) * N + 1);
+	j = (int)(((win_y - my) / (float)win_y) * N + 1);  
 
 	if (i<1 || i>N || j<1 || j>N) return;
 
@@ -243,6 +245,14 @@ static void get_from_UI(float* d, float* u, float* v)
 
 	if (mouse_down[2]) {
 		d[IX(i, j)] = source;
+	}
+	if (mouse_down[1])
+	{
+		cenX = mx;
+		cenY = my;
+		diffX = mx - omx;
+		diffY = omy - my;
+
 	}
 
 	omx = mx;
@@ -311,7 +321,7 @@ static void reshape_func(int width, int height)
 static void idle_func(void)
 {
 	get_from_UI(dens_prev, u_prev, v_prev);
-	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor, diffvorx, diffvory);
+	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
 
 	// Count time

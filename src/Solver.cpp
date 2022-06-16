@@ -1,6 +1,9 @@
 #include <iostream>
 #include <typeinfo>
 #include <math.h>
+#include <vector>
+#include <tuple>
+
 #define IX(i,j) ((i)+(N+2)*(j))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
 #define FOR_EACH_CELL for ( i=1 ; i<=N ; i++ ) { for ( j=1 ; j<=N ; j++ ) {
@@ -8,12 +11,51 @@
 #define FOR_EACH_CELL_EXCEPT_PERIMETER for ( i=2 ; i<N ; i++ ) { for ( j=2 ; j<N ; j++ ) {
 
 using namespace std;
+extern std::vector<std::tuple<int, int>> edges;
+extern static int mx, my;
 
 void add_source(int N, float* x, float* s, float dt)
 {
 	int i, size = (N + 2) * (N + 2);
 	for (i = 0; i < size; i++) x[i] += dt * s[i];
 }
+
+//Kind of works 
+void set_bound(int x, int y, int a, int N, int b,  float* mat)
+{
+	int i;
+
+	for (i = x; i <= x + a; i++) {
+		mat[IX(i, y)] = b == 2 ? -mat[IX(i, y - 1)] : mat[IX(i, y - 1 )];
+		mat[IX(i, y + a)] = b == 2 ? -mat[IX(i, y + a + 1)] : mat[IX(i, y + a + 1)];
+	}
+	for (i = y; i <= y + a; i++) {
+		mat[IX(x, i)] = b == 1 ? -mat[IX( x - 1, i)] : mat[IX(x - 1, i)];
+		mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
+	}
+	int j, k;
+	for (j = x + 1; j <= x + a - 1; j++)
+	{
+		for (k = y + 1; k <= y + a - 1; k++)
+		{
+			mat[IX(j, k)] = 0;
+		}
+	}
+	mat[IX(x, y)] = 0.5f * (mat[IX(x - 1, y)] + mat[IX(x,  y - 1)]);
+	mat[IX(x, y + a)] = 0.5f * (mat[IX(x - 1, y + a)] + mat[IX(x,  y + a + 1)]);
+	mat[IX(x + a, y)] = 0.5f * (mat[IX(x + a + 1, y)] + mat[IX(x + a, y - 1)]);
+	mat[IX(x + a , y + a)] = 0.5f * (mat[IX(x + a + 1, y + a)] + mat[IX(x + a, y + a + 1)]);
+}
+
+//void set_bound(std::vector<std::tuple<int,int>> edges, int N, int b, float* mat)
+//{
+//	for (auto edge : edges)
+//	{
+//		mat[IX(get<0>(edge), get<1>(edge))] = b == 2 ? -mat[IX(get<0>(edge), get<1>(edge) - 1)] : mat[IX(get<0>(edge), get<1>(edge) - 1)];
+//		mat[IX(get<0>(edge), get<1>(edge))] = b == 1 ? -mat[IX(get<0>(edge) - 1, get<1>(edge))] : mat[IX(get<0>(edge) - 1, get<1>(edge))];
+//		mat[IX(get<0>(edge), get<1>(edge))] = 0.5f * (mat[IX(get<0>(edge) - 1, get<1>(edge))] + mat[IX(get<0>(edge), get<1>(edge) - 1)]);
+//	}
+//}
 
 void set_bnd(int N, int b, float* x)
 {
@@ -40,6 +82,7 @@ void lin_solve(int N, int b, float* x, float* x0, float a, float c)
 			x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
 		END_FOR
 			set_bnd(N, b, x);
+			set_bound(mx,my,10, N, b,  x);
 	}
 }
 
@@ -64,6 +107,7 @@ void advect(int N, int b, float* d, float* d0, float* u, float* v, float dt)
 		s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
 	END_FOR
 		set_bnd(N, b, d);
+		set_bound(mx,my,10, N, b,  d);
 }
 
 void project(int N, float* u, float* v, float* p, float* div)
@@ -74,7 +118,7 @@ void project(int N, float* u, float* v, float* p, float* div)
 		div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / N;
 	p[IX(i, j)] = 0;
 	END_FOR
-		set_bnd(N, 0, div); set_bnd(N, 0, p);
+		set_bnd(N, 0, div); set_bnd(N, 0, p); set_bound(mx, my,10, N, 0, p), set_bound(mx,my,10, N, 0, div);
 
 	lin_solve(N, 0, p, div, 1, 4);
 
@@ -82,7 +126,7 @@ void project(int N, float* u, float* v, float* p, float* div)
 		u[IX(i, j)] -= 0.5f * N * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
 	v[IX(i, j)] -= 0.5f * N * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
 	END_FOR
-		set_bnd(N, 1, u); set_bnd(N, 2, v);
+		set_bnd(N, 1, u); set_bnd(N, 2, v); set_bound(mx,my,10, N, 1, u); set_bound(my,,10, N, 2,  v);
 }
 
 void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt)
@@ -92,7 +136,7 @@ void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float
 	SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 
-void vorticity(int N, float* u, float* v, float * vor, float* diffvorx, float* diffvory)
+void vorticity(int N, float* u, float* v, float * vor)
 {
 	int i, j;
 
@@ -114,12 +158,12 @@ void vorticity(int N, float* u, float* v, float * vor, float* diffvorx, float* d
 			dwdx /= total;
 			dwdy /= total;
 		}
-		u[IX(i, j)] += dwdy * vor[IX(i, j)] * 0.00001;
-		v[IX(i, j)] -= dwdx * vor[IX(i, j)] * 0.00001;
-	END_FOR
+		u[IX(i, j)] += dwdy * vor[IX(i, j)] * 1.0 / N * 0.5;
+		v[IX(i, j)] -= dwdx * vor[IX(i, j)] * 1.0 / N * 0.5;
+		END_FOR
 }
 
-void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, float* diffvorx, float* diffvory)
+void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor)
 {
 	add_source(N, u, u0, dt); add_source(N, v, v0, dt);
 	SWAP(u0, u); diffuse(N, 1, u, u0, visc, dt);
@@ -128,7 +172,7 @@ void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float
 	SWAP(u0, u); SWAP(v0, v);
 	advect(N, 1, u, u0, u0, v0, dt); advect(N, 2, v, v0, u0, v0, dt);
 	project(N, u, v, u0, v0);
-	vorticity(N, u, v, vor, diffvorx, diffvory);
+	vorticity(N, u, v, vor);
 	
 }
 
