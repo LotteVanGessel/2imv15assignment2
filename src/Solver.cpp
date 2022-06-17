@@ -2,7 +2,6 @@
 #include <typeinfo>
 #include <math.h>
 #include <vector>
-#include <tuple>
 
 #define IX(i,j) ((i)+(N+2)*(j))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
@@ -11,8 +10,16 @@
 #define FOR_EACH_CELL_EXCEPT_PERIMETER for ( i=2 ; i<N ; i++ ) { for ( j=2 ; j<N ; j++ ) {
 
 using namespace std;
-extern std::vector<std::tuple<int, int>> edges;
-extern static int mx, my;
+
+int cenX = 10;
+int cenY = 10;
+std::vector<std::vector<int>> edges; 
+
+void setCenter(int cX, int cY)
+{
+	cenX = cX;
+	cenY = cY;
+}
 
 void add_source(int N, float* x, float* s, float dt)
 {
@@ -82,7 +89,7 @@ void lin_solve(int N, int b, float* x, float* x0, float a, float c)
 			x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] + x[IX(i + 1, j)] + x[IX(i, j - 1)] + x[IX(i, j + 1)])) / c;
 		END_FOR
 			set_bnd(N, b, x);
-			set_bound(mx,my,10, N, b,  x);
+			set_bound(cenX, cenY, 10, N, b,  x);
 	}
 }
 
@@ -107,7 +114,7 @@ void advect(int N, int b, float* d, float* d0, float* u, float* v, float dt)
 		s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
 	END_FOR
 		set_bnd(N, b, d);
-		set_bound(mx,my,10, N, b,  d);
+		set_bound(cenX, cenY ,10, N, b,  d);
 }
 
 void project(int N, float* u, float* v, float* p, float* div)
@@ -118,7 +125,7 @@ void project(int N, float* u, float* v, float* p, float* div)
 		div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / N;
 	p[IX(i, j)] = 0;
 	END_FOR
-		set_bnd(N, 0, div); set_bnd(N, 0, p); set_bound(mx, my,10, N, 0, p), set_bound(mx,my,10, N, 0, div);
+		set_bnd(N, 0, div); set_bnd(N, 0, p); set_bound(cenX,cenY,10, N, 0, p), set_bound(cenX,cenY,10, N, 0, div);
 
 	lin_solve(N, 0, p, div, 1, 4);
 
@@ -126,7 +133,7 @@ void project(int N, float* u, float* v, float* p, float* div)
 		u[IX(i, j)] -= 0.5f * N * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
 	v[IX(i, j)] -= 0.5f * N * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
 	END_FOR
-		set_bnd(N, 1, u); set_bnd(N, 2, v); set_bound(mx,my,10, N, 1, u); set_bound(my,,10, N, 2,  v);
+		set_bnd(N, 1, u); set_bnd(N, 2, v); set_bound(cenX,cenY,10, N, 1, u); set_bound(cenX,cenY,10, N, 2,  v);
 }
 
 void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt)

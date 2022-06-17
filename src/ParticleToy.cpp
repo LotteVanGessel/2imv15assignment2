@@ -19,7 +19,8 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <vector>
-#include <tuple>
+
+
 
 /* macros */
 
@@ -30,7 +31,9 @@
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
-//extern void set_bound(std::vector<std::tuple<int, int>> edges, int N, int b, float* mat);
+extern void setCenter(int cX, int cY);
+extern std::vector<std::vector<int>> edges;
+
 /* global variables */
 
 static int N;
@@ -40,10 +43,9 @@ static int dvel;
 static int dgrid; // draw grid
 
 static float* u, * v, * u_prev, * v_prev;
-static int cenX, cenY, diffX, diffY;
 static float* dens, * dens_prev;
 static float* vor;
-std::vector<std::tuple<int, int>> edges;
+
 
 static int win_id;
 static int win_x, win_y;
@@ -51,6 +53,7 @@ static int mouse_down[3];
 static int omx, omy, mx, my;
 
 static float current_time;
+
 
 
 /*
@@ -231,10 +234,10 @@ static void get_from_UI(float* d, float* u, float* v)
 		u[i] = v[i] = d[i] = 0.0f;
 	}
 
-	if (!mouse_down[0] && !mouse_down[2]) return;
+	//if (!mouse_down[0] && !mouse_down[2]) return;
 
 	i = (int)((mx / (float)win_x) * N + 1);
-	j = (int)(((win_y - my) / (float)win_y) * N + 1);  
+	j = (int)(((win_y - my) / (float)win_y) * N + 1);
 
 	if (i<1 || i>N || j<1 || j>N) return;
 
@@ -248,11 +251,13 @@ static void get_from_UI(float* d, float* u, float* v)
 	}
 	if (mouse_down[1])
 	{
-		cenX = mx;
-		cenY = my;
-		diffX = mx - omx;
-		diffY = omy - my;
-
+		/*int prevx = (int)((omx / (float)win_x) * N + 1);
+		int prevy = (int)(((win_y - omy) / (float)win_y) * N + 1);
+		glColor3f(0.5f, 1.0f, 0.5f);
+		glVertex2f(i, j);
+		glVertex2f(prevx, prevy);*/
+		setCenter(i, j);
+		std::cout << i << ", "  << j << std::endl;
 	}
 
 	omx = mx;
