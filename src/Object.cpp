@@ -1,6 +1,7 @@
 #include "Object.h"
 #include <GL/glut.h>
 #include <iostream>
+#include <cmath>
 
 #define IX(i,j) ((i)+(N+2)*(j))
 
@@ -17,14 +18,15 @@ void Object::reset() {
 }
 
 void Object::draw(float h) {
-	glBegin(GL_LINES);
-	glColor3f(0.0f, 1.0f, 0.0f);
 
 	float x0 = (cenX - size - 0.5f) * h;
 	float x1 = (cenX + size - 0.5f) * h;
 	float y0 = (cenY - size - 0.5f) * h;
 	float y1 = (cenY + size - 0.5f) * h;
 
+	glBegin(GL_LINES);
+	glColor3f(1.0f, 1.0f, 1.0f);
+
 	glVertex2f(x0, y0);
 	glVertex2f(x1, y0);
 
@@ -37,15 +39,27 @@ void Object::draw(float h) {
 	glVertex2f(x0, y1);
 	glVertex2f(x1, y1);
 	
-	glVertex2f(0, 0);
-	glVertex2f(10, 10);
 	glEnd();
 }
 
 void Object::setCenter(int cX, int cY)
 {
+	if (std::abs(cX - cenX) > 1)
+	{
+		int increment = (cX - cenX) / std::abs(cX - cenX);
+		cenX += increment; 
+	}
+	else {
 		cenX = cX;
+	}
+	if (std::abs(cY - cenY) > 1)
+	{
+		int increment = (cY - cenY) / std::abs(cY - cenY);
+		cenY += increment;
+	}
+	else {
 		cenY = cY;
+	}
 }
 
 void Object::setBound(int N, int b, float* mat)

@@ -211,6 +211,7 @@ static void draw_density(void)
 				d10 = dens[IX(i + 1, j)];
 				d11 = dens[IX(i + 1, j + 1)];
 
+
 				glColor3f(d00, d00, d00); glVertex2f(x, y);
 				glColor3f(d10, d10, d10); glVertex2f(x + h, y);
 				glColor3f(d11, d11, d11); glVertex2f(x + h, y + h);
@@ -327,7 +328,6 @@ static void idle_func(void)
 	get_from_UI(dens_prev, u_prev, v_prev);
 	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
-	mObj->draw(1.0 / N);
 
 	// Count time
 	current_time += dt;
@@ -340,7 +340,7 @@ static char *title_buff = (char *) malloc(sizeof(char) * 1024);
 static void display_func(void)
 {
 	pre_display();
-
+	mObj->draw(1.0 / N);
 	if (dvel) draw_velocity();
 	else		draw_density();
 	if (dgrid) draw_gridlines();
