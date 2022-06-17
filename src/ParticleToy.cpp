@@ -216,10 +216,14 @@ static void draw_density(void)
 				glColor3f(d10, d10, d10); glVertex2f(x + h, y);
 				glColor3f(d11, d11, d11); glVertex2f(x + h, y + h);
 				glColor3f(d01, d01, d01); glVertex2f(x, y + h);
+
+				
+
 			#endif
 		}
 	}
-
+	//drawing of object. 
+	mObj->draw(1.0 / N);
 	glEnd();
 }
 
@@ -236,8 +240,6 @@ static void get_from_UI(float* d, float* u, float* v)
 	for (i = 0; i < size; i++) {
 		u[i] = v[i] = d[i] = 0.0f;
 	}
-
-	//if (!mouse_down[0] && !mouse_down[2]) return;
 
 	i = (int)((mx / (float)win_x) * N + 1);
 	j = (int)(((win_y - my) / (float)win_y) * N + 1);
@@ -257,7 +259,8 @@ static void get_from_UI(float* d, float* u, float* v)
 		int prevx = (int)((omx / (float)win_x) * N + 1);
 		int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
 		mObj->setCenter(i, j);
-		mObj->velocity(i - prevx, prevy - j);
+		mObj->force(u, v, dens, N);
+
 	}
 
 	omx = mx;

@@ -16,7 +16,6 @@ public:
 	void setCenter(int cX, int cY);
 	void setBound(int N, int b, float* mat);
 	void velocity(int vx, int vy);
-
-	void force(int diffx, int diffy);
+	void force(float* u, float* v, float* dens, int N);
 
 };
