@@ -19,6 +19,7 @@
 #include <GL/glut.h>
 #include <iostream>
 #include <vector>
+#include "Object.h"
 
 
 
@@ -31,11 +32,12 @@
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
-extern void setCenter(int cX, int cY);
+//extern void setCenter(int cX, int cY);
 extern std::vector<std::vector<int>> edges;
 
 /* global variables */
 
+Object* mObj = new Object(20, 20, 5);
 static int N;
 static float dt, diff, visc;
 static float force, source;
@@ -251,13 +253,10 @@ static void get_from_UI(float* d, float* u, float* v)
 	}
 	if (mouse_down[1])
 	{
-		/*int prevx = (int)((omx / (float)win_x) * N + 1);
-		int prevy = (int)(((win_y - omy) / (float)win_y) * N + 1);
-		glColor3f(0.5f, 1.0f, 0.5f);
-		glVertex2f(i, j);
-		glVertex2f(prevx, prevy);*/
-		setCenter(i, j);
-		std::cout << i << ", "  << j << std::endl;
+		int prevx = (int)((omx / (float)win_x) * N + 1);
+		int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
+		mObj->setCenter(i, j);
+		mObj->velocity(i - prevx, prevy - j);
 	}
 
 	omx = mx;
@@ -328,6 +327,7 @@ static void idle_func(void)
 	get_from_UI(dens_prev, u_prev, v_prev);
 	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
+	mObj->draw(1.0 / N);
 
 	// Count time
 	current_time += dt;
