@@ -434,12 +434,12 @@ int main(int argc, char** argv)
 	printf("\t Add densities with the right mouse button\n");
 	printf("\t Add velocities with the left mouse button and dragging the mouse\n");
 	printf("\t*-------------------------------------------------------*\n");
-	printf("\t|   Toggle density/(v)elocity display with the 'v' key  |\n");
-	printf("\t|   (C)lear the simulation by pressing the 'c' key      |\n");
-	printf("\t|   Draw (g)ridlines by pressing the 'g' key            |\n");
-	printf("\t|   Toggle smooth (d)rawing by pressing the 'd' key     |\n");
+	printf("\t|   'v': Toggle density/(v)elocity display              |\n");
+	printf("\t|   'c': (C)lear the simulation                         |\n");
+	printf("\t|   'g': Draw (g)ridlines                               |\n");
+	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
+	printf("\t|   'q': (Q)uit                                         |\n");
 	printf("\t*-------------------------------------------------------*\n");
-	printf("\t Quit by pressing the 'q' key\n");
 
 	dvel = 0;
 	dgrid = 0;
