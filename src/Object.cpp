@@ -31,8 +31,15 @@ void Object::draw(float h) {
 
 	glVertex2f(x0, y0);
 	glVertex2f(x1, y0);
+
+	glVertex2f(x1, y0);
+	glVertex2f(x1, y1);
+
 	glVertex2f(x1, y1);
 	glVertex2f(x0, y1);
+
+	glVertex2f(x0, y1);
+	glVertex2f(x0, y0);
 	
 	glEnd();
 }

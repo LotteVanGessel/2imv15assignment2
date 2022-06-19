@@ -16,3 +16,4 @@ _deps
 /include/windows
 /lib
 /obj
+.vscode/settings.json
