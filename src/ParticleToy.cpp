@@ -26,7 +26,7 @@
 /* macros */
 
 #define IX(i,j) ((i)+(N+2)*(j))
-//#define DEBUG_DRAWING
+static bool DEBUG_DRAWING = false;
 
 /* external definitions (from solver.c) */
 
@@ -190,20 +190,20 @@ static void draw_density(void)
 	glBegin(GL_QUADS);
 
 	for (i = 0; i <= N+1; i++) {
-		#ifdef DEBUG_DRAWING
+		if (DEBUG_DRAWING)
 			x = (i-1) * h;
-		#else
+		else
 			x = (i - 0.5f) * h;
-		#endif
+		
 		for (j = 0; j <= N+1; j++) {
-			#ifdef DEBUG_DRAWING
+			if (DEBUG_DRAWING){
 				y = (j-1)*h;
 				d00 = dens[IX(i, j)];
 				glColor3f(d00, d00, d00); glVertex2f(x, y);
 				glColor3f(d00, d00, d00); glVertex2f(x + h, y);
 				glColor3f(d00, d00, d00); glVertex2f(x + h, y + h);
 				glColor3f(d00, d00, d00); glVertex2f(x, y + h);
-			#else
+			}else{
 				y = (j - 0.5f) * h;
 
 				d00 = dens[IX(i, j)];
@@ -216,15 +216,12 @@ static void draw_density(void)
 				glColor3f(d10, d10, d10); glVertex2f(x + h, y);
 				glColor3f(d11, d11, d11); glVertex2f(x + h, y + h);
 				glColor3f(d01, d01, d01); glVertex2f(x, y + h);
-
-				
-
-			#endif
+			}
 		}
 	}
+	glEnd();
 	//drawing of object. 
 	mObj->draw(1.0 / N);
-	glEnd();
 }
 
 /*
@@ -299,6 +296,11 @@ static void key_func(unsigned char key, int x, int y)
 	case 'g':
 	case 'G':
 		dgrid = !dgrid;
+		break;
+
+	case 'd':
+	case 'D':
+		DEBUG_DRAWING = !DEBUG_DRAWING;
 		break;
 	}
 }
@@ -431,9 +433,13 @@ int main(int argc, char** argv)
 	printf("\n\nHow to use this demo:\n\n");
 	printf("\t Add densities with the right mouse button\n");
 	printf("\t Add velocities with the left mouse button and dragging the mouse\n");
-	printf("\t Toggle density/velocity display with the 'v' key\n");
-	printf("\t Clear the simulation by pressing the 'c' key\n");
-	printf("\t Quit by pressing the 'q' key\n");
+	printf("\t*-------------------------------------------------------*\n");
+	printf("\t|   'v': Toggle density/(v)elocity display              |\n");
+	printf("\t|   'c': (C)lear the simulation                         |\n");
+	printf("\t|   'g': Draw (g)ridlines                               |\n");
+	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
+	printf("\t|   'q': (Q)uit                                         |\n");
+	printf("\t*-------------------------------------------------------*\n");
 
 	dvel = 0;
 	dgrid = 0;
