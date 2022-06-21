@@ -42,12 +42,15 @@ Object* mObj = new Object(20, 20, 5);
 Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
 Vec2 top_right_rectangle = Vec2(0.75, 0.75);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
+Rigidbody* rb2;
 RigidbodyCollection rbc = RigidbodyCollection();
 static int N;
 static float dt, diff, visc;
 static float force, source;
 static int dvel;
 static int dgrid; // draw grid
+static int dosim = !0;
+static int draw_mode_rigidbodies = 0;
 
 static float* u, * v, * u_prev, * v_prev;
 static float* dens, * dens_prev;
@@ -228,7 +231,7 @@ static void draw_density(void)
 	// printf("Done drawing densities...\n");
 	mObj->draw(1.0 / N);
 	// printf("Done drawing object...\n");
-	rb->draw();
+	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 	// printf("Done drawing rb...\n");
 	// exit(0)
 }
@@ -311,6 +314,16 @@ static void key_func(unsigned char key, int x, int y)
 	case 'D':
 		DEBUG_DRAWING = !DEBUG_DRAWING;
 		break;
+
+	case 'r':
+	case 'R':
+		(++draw_mode_rigidbodies) %= DrawModes::num_draw_modes;
+		break;
+
+	case 'p':
+	case 'P':
+		dosim = !dosim;
+		break;
 	}
 }
 
@@ -339,15 +352,17 @@ static void reshape_func(int width, int height)
 
 static void idle_func(void)
 {
-	get_from_UI(dens_prev, u_prev, v_prev);
-	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
-	dens_step(N, dens, dens_prev, u, v, diff, dt);
+	if (dosim){
+		get_from_UI(dens_prev, u_prev, v_prev);
+		vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
+		dens_step(N, dens, dens_prev, u, v, diff, dt);
 
-	// update rigidbodycollection
-	rbc.step(dt);
+		// update rigidbodycollection
+		rbc.step(dt);
 
-	// Count time
-	current_time += dt;
+		// Count time
+		current_time += dt;
+	}
 
 	glutSetWindow(win_id);
 	glutPostRedisplay();
@@ -366,6 +381,10 @@ static void display_func(void)
     sprintf(title_buff, "Assignment 2 - t: %.3f", current_time);
     glutSetWindowTitle(title_buff);
 	
+	// if (dosim) printf("============================================\n");
+	// if (dosim) rbc.print();
+
+
 	post_display();
 }
 
@@ -452,6 +471,8 @@ int main(int argc, char** argv)
 	printf("\t|   'c': (C)lear the simulation                         |\n");
 	printf("\t|   'g': Draw (g)ridlines                               |\n");
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
+	printf("\t|   'r': Cycle (r)igidbody drawing mode                 |\n");
+	printf("\t|   'p': (P)ause                                        |\n");
 	printf("\t|   'q': (Q)uit                                         |\n");
 	printf("\t*-------------------------------------------------------*\n");
 
@@ -466,9 +487,31 @@ int main(int argc, char** argv)
 	open_glut_window();
 
 
-	rbc.addRB(rb);
-	rb->omega = 0.01;
+	Shape shape2 = Shape();
+	shape2.points.push_back(Vec2(0.25, 0.25));
+	shape2.points.push_back(Vec2( 0.3, 0.25));
+	shape2.points.push_back(Vec2( 0.3,  0.3));
+	shape2.points.push_back(Vec2(0.35, 0.35));
+	shape2.points.push_back(Vec2(0.25, 0.35));
+	shape2.centroid = Vec2(0.275, 0.325);
+	//TRIANGULATE 
+	shape2.triangulation.push_back(0);
+	shape2.triangulation.push_back(1);
+	shape2.triangulation.push_back(2);
+	shape2.triangulation.push_back(2);
+	shape2.triangulation.push_back(3);
+	shape2.triangulation.push_back(4);
+	shape2.triangulation.push_back(0);
+	shape2.triangulation.push_back(2);
+	shape2.triangulation.push_back(4);
+	shape2.post_ctor();
+	rb2 = new Rigidbody(shape2);
 
+	rbc.addRB(rb);
+	rbc.addRB(rb2);
+	rb->omega = 3.141592*0.25*dt;
+	rb2->omega = -3.141592*dt;
+	
 	//VERY IMPORTANT
 	rbc.init();
 

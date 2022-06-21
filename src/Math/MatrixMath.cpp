@@ -1,5 +1,8 @@
 #include "MatrixMath.h"
 #include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <cstdio>
 
 // **=================================**
 // || Operators                       ||
@@ -47,6 +50,16 @@ Mat2 Mat2::get_inverse(){
     inv *= (1/det()); //in place multiplication
 }
 
+void Mat2::print(){
+    printf("\tMat2: [[%6.3f, %6.3f]\n", data[0], data[1]);
+    printf("\t       [%6.3f, %6.3f]]\n", data[2], data[3]);
+}
+
+void Vec2::print(){
+    printf("\tVec2: [%6.3f, %6.3f]\n", data[0], data[1]);
+}
+
+
 Vec2::Vec2(){
     data = (float*) malloc(2*sizeof(float));
     data[0] = 0;
@@ -62,6 +75,15 @@ Vec2::Vec2(float x, float y){
     data[0] = x;
     data[1] = y;
     n = 2;
+}
+
+void RotMat2::update(float omega){
+    c = cos(omega);
+    s = sin(omega);
+    data[0] = c;
+    data[1] = s;
+    data[2] = -s;
+    data[3] = c;
 }
 
 
@@ -85,6 +107,13 @@ Vec2 operator*(const Mat2 &mat, const Vec2 &v){
 void matmult(const Mat2 &mat, const Vec2 &v, Vec2 &result){
     result[0] = mat[0]*v[0] + mat[1]*v[1];
     result[1] = mat[2]*v[0] + mat[3]*v[1];
+}
+
+Mat2 matmult(const Mat2 &A, const Mat2 &B, Mat2 &R){
+    std::memset(R.data, 0, 4 * sizeof(float));
+    for (int r = 0; r < 2; r++) for (int c = 0; c < 2; c++) for(int i = 0; i < 2; i++) {
+        R[Mat2::ind(r, c)] += A[Mat2::ind(r, i)] * B[Mat2::ind(i, c)];
+    }
 }
 
 void transmatmult(Mat2 &mat, const Vec2 &v, Vec2 &result){
