@@ -556,6 +556,7 @@ int main(int argc, char** argv)
 	printf("\t|   'c': (C)lear the simulation                         |\n");
 	printf("\t|   'g': Draw (g)ridlines                               |\n");
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
+	printf("\t|   'e': Toggle (e)dge drawin                           |\n");
 	printf("\t|   'r': Cycle (r)igidbody drawing mode                 |\n");
 	printf("\t|   'p': (P)ause                                        |\n");
 	printf("\t|   '>': Step forward once (can be done while paused)   |\n");
