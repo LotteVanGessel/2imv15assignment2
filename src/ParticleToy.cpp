@@ -307,8 +307,8 @@ static void get_from_UI(float* d, float* u, float* v)
 			{
 				int prevx = (int)((omx / (float)win_x) * N + 1);
 				int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
-				mObj->setCenter(i, j, N);
-				mObj->force(u, v, dens, N, dt);
+				targetx = i;
+				targety = j;
 
 			}
 	}
@@ -532,10 +532,10 @@ int main(int argc, char** argv)
 	if (argc == 1) {
 		N = 64;
 		dt = 0.01f;
-		diff = 0.001f;
-		visc = 0.01f;
+		diff = 0.0f;
+		visc = 0.0f;
 		force = 5.0f;
-		source = 1000.0f;
+		source = 100.0f;
 		fprintf(stderr, "Using defaults : N=%d dt=%g diff=%g visc=%g force = %g source=%g\n",
 			N, dt, diff, visc, force, source);
 	}

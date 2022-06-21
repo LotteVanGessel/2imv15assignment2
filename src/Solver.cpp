@@ -41,7 +41,10 @@ void set_edge(std::vector<std::vector< Vec2>> edges, int b, int N, float* x)
 		{
 			diffx = 0;
 		}
-		x[IX(x1, y)] = x[IX(x1 + diffx, y + diffy)];
+		float dens1 = x[IX(x1, y)];
+		float dens2 = x[IX(x1 + diffy, y + diffx)];
+		x[IX(x1, y)] = dens2;
+		x[IX(x1 + diffy, y + diffx)] = dens1;
 	}
 
 
