@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include "Object.h"
+#include "Rigidbody.h"
 
 
 
@@ -38,6 +39,10 @@ extern std::vector<std::vector<int>> edges;
 /* global variables */
 
 Object* mObj = new Object(20, 20, 5);
+Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
+Vec2 top_right_rectangle = Vec2(0.75, 0.75);
+Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
+RigidbodyCollection rbc = RigidbodyCollection();
 static int N;
 static float dt, diff, visc;
 static float force, source;
@@ -220,8 +225,12 @@ static void draw_density(void)
 		}
 	}
 	glEnd();
-	//drawing of object. 
+	// printf("Done drawing densities...\n");
 	mObj->draw(1.0 / N);
+	// printf("Done drawing object...\n");
+	rb->draw();
+	// printf("Done drawing rb...\n");
+	// exit(0)
 }
 
 /*
@@ -334,6 +343,9 @@ static void idle_func(void)
 	vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 	dens_step(N, dens, dens_prev, u, v, diff, dt);
 
+	// update rigidbodycollection
+	rbc.step(dt);
+
 	// Count time
 	current_time += dt;
 
@@ -345,7 +357,7 @@ static char *title_buff = (char *) malloc(sizeof(char) * 1024);
 static void display_func(void)
 {
 	pre_display();
-	mObj->draw(1.0 / N);
+
 	if (dvel) draw_velocity();
 	else		draw_density();
 	if (dgrid) draw_gridlines();
@@ -397,6 +409,8 @@ static void open_glut_window(void)
 
 int main(int argc, char** argv)
 {
+
+
 	glutInit(&argc, argv);
 
 	if (argc != 1 && argc != 6) {
@@ -450,6 +464,13 @@ int main(int argc, char** argv)
 	win_x = 512;
 	win_y = 512;
 	open_glut_window();
+
+
+	rbc.addRB(rb);
+	rb->omega = 0.01;
+
+	//VERY IMPORTANT
+	rbc.init();
 
 	glutMainLoop();
 

@@ -1,11 +1,13 @@
+#ifndef RIGIDBODY_H
+#define RIGIDBODY_H
 #include "MatrixMath.h"
 #include <vector>
-#include <cstring>
 
 class Shape{
     public:
         std::vector<Vec2> points;
         Vec2 centroid;
+        Vec2 temp;
         
         std::vector<Vec2> rel_points;
 
@@ -14,24 +16,16 @@ class Shape{
         void calc_rel_points();
         virtual void triangulate(){};
         virtual void calculate_centroid(){};
-        void draw(Vec2 &offset, float r, float g, float b);
+        void draw(Mat2 &rotation, Vec2 &offset, float r, float g, float b);
 
         void post_ctor();
 
-        Shape();
+        Shape(){}
 };
 
-class Rect : Shape{
+class Rect : public Shape{
     public:
-        Rect(Vec2 botleft, Vec2 topright){
-            points = std::vector<Vec2>{
-                                       Vec2( botleft[0],  botleft[1]),
-                                       Vec2(topright[0],  botleft[1]),
-                                       Vec2(topright[0], topright[1]),
-                                       Vec2( botleft[0], topright[1])
-                                      };
-            post_ctor();
-        }
+        Rect(Vec2 &botleft, Vec2 &topright);
 
         void calculate_centroid();
         void triangulate();
@@ -70,45 +64,36 @@ class Rigidbody{
     Vec2 tau; // Tau(t) -> torque
 
     Rigidbody(Shape shape);
-    ~Rigidbody(){
-        free(state);
-    }
     void dxdt(float* y);
-    void update_state(float* new_state){ std::memcpy(state, new_state, (x.n + R.n + P.n + L.n)*sizeof(float));}
+    void update_state(float* new_state);
+    void draw();
 };
 
 class RigidbodyCollection{
-    std::vector<Rigidbody> rbs;
+    std::vector<Rigidbody*> rbs;
     float* x0;
     float* x1;
-    float* temp;
     float* Dxdt;
+    float* temp;
 
     int n;
 
+    bool is_active = false;
+    int resize_all_calls = 0;
+    int resize_all_limit = 10;
     public:
-        RigidbodyCollection(){
-            rbs = std::vector<Rigidbody>();
-        }
+        RigidbodyCollection();
 
-        ~RigidbodyCollection(){
-            free(x0);
-            free(x1);
-            free(temp);
-            free(Dxdt);
-        }
-        void init(){
-            n = Rigidbody::STATE_SIZE * rbs.size();
-            x0   = (float*) malloc(n* sizeof(float));
-            x1   = (float*) malloc(n* sizeof(float));
-            temp = (float*) malloc(n* sizeof(float));
-            Dxdt = (float*) malloc(n* sizeof(float));
-            copy_states(x1);
-        }
+        void init();
 
-        void copy_states(float* dst){ for (int i = 0; i < rbs.size(); ++i) std::memcpy(dst+(i*Rigidbody::STATE_SIZE), rbs[i].state, Rigidbody::STATE_SIZE*sizeof(float));}
+        void copy_states(float* dst, int l = 0, int r = -1);
 
         void step(float dt);
 
         void computeforceandtorque();
+
+        void addRB(Rigidbody* rb);
+
+        inline void resize_all(int old_size, int new_size);
 };
+#endif
