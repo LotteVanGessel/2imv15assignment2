@@ -21,6 +21,8 @@
 #include <vector>
 #include "Object.h"
 #include "Rigidbody.h"
+#include "RigidbodyCollection.h"
+#include "Shape.h"
 
 
 
@@ -374,7 +376,9 @@ static void display_func(void)
 	if (dgrid) draw_gridlines();
 	
 	//update title
-    sprintf(title_buff, "Assignment 2 - t: %.3f", current_time);
+	float dens_sum = 0;
+	for(int x = 1; x <= N; x++) for (int y = 1; y <= N; y++) dens_sum += dens[IX(x, y)];
+    sprintf(title_buff, "Assignment 2 - t: %.3f - total dens: %.3f", current_time, dens_sum);
     glutSetWindowTitle(title_buff);
 	
 	// if (dosim) printf("============================================\n");
