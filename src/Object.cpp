@@ -127,7 +127,7 @@ void Object::setBound(int N, int b, float* mat)
 }
 
 
-void Object::force(float* u, float* v, float* dens, int N)
+void Object::force(float* u, float* v, float* dens, int N, float dt)
 {
 	int sign_x = velx > 0 ? 1 : -1;
 	sign_x = velx == 0 ? 0 : sign_x;
@@ -135,41 +135,25 @@ void Object::force(float* u, float* v, float* dens, int N)
 	sign_y = vely == 0 ? 0 : sign_y;
 
 	if (sign_x == 0 && sign_y == 0) return;
-	
+	float mv = mass/(N*size*dt);
 	if (sign_x != 0){
 		int ahead = cenX + (size+1)*sign_x;
 		int behind = cenX - (size+1)*sign_x; 
-		for (int j = cenY - size+1; j < cenY + size; j++) {
+		for (int j = cenY - size; j <= cenY + size; j++) {
 			dens[IX(ahead, j)] += dens[IX(ahead - sign_x, j)];
 			dens[IX(behind, j)] = 0;
-			u[IX(ahead, j)] += sign_x * dens[IX(ahead, j)] * 10; // TODO: arbitrary constant
+			if(dens[IX(ahead - sign_x, j)] > 0.1f) u[IX(ahead, j)] += sign_x * mv/dens[IX(ahead-sign_x, j)]; // TODO: arbitrary constant
 		}
-
-		//hoekjes
-		dens[IX(ahead, cenY-size)] += 0.5f*dens[IX(ahead-sign_x, cenY-size)];
-		dens[IX(ahead, cenY+size)] += 0.5f*dens[IX(ahead-sign_x, cenY+size)];
-
-		dens[IX(ahead-sign_x, cenY-size-1)] += 0.5f*dens[IX(ahead-sign_x, cenY-size)];
-		dens[IX(ahead-sign_x, cenY+size+1)] += 0.5f*dens[IX(ahead-sign_x, cenY+size)];
-
 	}
 
 	if (sign_y != 0){
 		int ahead = cenY + (size+1)*sign_y;
 		int behind = cenY - (size+1)*sign_y; 
-		for (int i = cenX - size + 1; i < cenX + size; i++) {
+		for (int i = cenX - size; i <= cenX + size; i++) {
 			dens[IX(i, ahead)] += dens[IX(i, ahead-sign_y)];
 			dens[IX(i, behind)] = 0;
-			v[IX(i, ahead)] += sign_y * dens[IX(i, ahead)] * 10; // TODO: arbitrary constant
+			if(dens[IX(i, ahead-sign_y)] > 0.1f) v[IX(i, ahead)] += sign_y * mv/dens[IX(i, ahead-sign_y)]; // TODO: arbitrary constant
 		}
-
-		//hoekjes
-		dens[IX(cenX-size, ahead)] += 0.5f*dens[IX(cenX-size, ahead-sign_y)];
-		dens[IX(cenX+size, ahead)] += 0.5f*dens[IX(cenX+size, ahead-sign_y)];
-
-		dens[IX(cenX-size-1, ahead-sign_y)] += 0.5f*dens[IX(cenX-size, ahead-sign_y)];
-		dens[IX(cenX+size+1, ahead-sign_y)] += 0.5f*dens[IX(cenX+size, ahead-sign_y)];
-
 	}
 }
 

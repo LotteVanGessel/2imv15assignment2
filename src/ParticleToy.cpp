@@ -268,7 +268,7 @@ static void get_from_UI(float* d, float* u, float* v)
 		int prevx = (int)((omx / (float)win_x) * N + 1);
 		int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
 		mObj->setCenter(i, j, N);
-		mObj->force(u, v, dens, N);
+		mObj->force(u, v, dens, N, dt);
 
 	}
 
@@ -398,7 +398,11 @@ static void display_func(void)
 	
 	//update title
 	float dens_sum = 0;
-	for(int x = 1; x <= N; x++) for (int y = 1; y <= N; y++) dens_sum += dens[IX(x, y)];
+	for(int x = 1; x <= N; x++) for (int y = 1; y <= N; y++){
+		if (x >= mObj->cenX-mObj->size && x <= mObj->cenX+mObj->size && 
+		    y >= mObj->cenY-mObj->size && y <= mObj->cenY+mObj->size) continue;
+		dens_sum += dens[IX(x, y)];
+	} 
     sprintf(title_buff, "Assignment 2 - t: %.3f - total dens: %.3f", current_time, dens_sum);
     glutSetWindowTitle(title_buff);
 	
