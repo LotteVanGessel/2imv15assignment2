@@ -115,11 +115,6 @@ void Object::setBound(int N, int b, float* mat)
 	mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
 }
 
-/* Does not yet work completely. Problems: 
-	the density at the corners of the square is not yet handled
-	the square does not yet apply force on the fluid while it moves. 
-	It generally does not seem to work
-*/
 
 void Object::force(float* u, float* v, float* dens, int N)
 {
@@ -132,13 +127,14 @@ void Object::force(float* u, float* v, float* dens, int N)
 	for (int j = cenY - size + 1; j < cenY + size; j++) {
 		dens[IX(posx + 1 * sign_x, j)] += dens[IX(posx, j)];
 		dens[IX(posx, j)] = 0;
+		u[IX(posx + 1 * sign_x, j)] += sign_x * dens[IX(posx, j)] * 10;
 
 	}
 	int posy = cenY + size * sign_y;
 	for (int i = cenX - size + 1; i < cenX + size; i++) {
 		dens[IX(i, posy + 1 * sign_y)] += dens[IX(i, posy)];
 		dens[IX(i, posy)] = 0;
-
+		v[IX(i, posy + 1)] += sign_y * dens[IX(i, posy)] * 10;
 	}
 }
 

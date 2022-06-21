@@ -33,12 +33,11 @@ static bool DEBUG_DRAWING = false;
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
-//extern void setCenter(int cX, int cY);
 extern std::vector<std::vector<int>> edges;
 
 /* global variables */
 
-Object* mObj = new Object(20, 20, 7);
+Object* mObj = new Object(20, 20, 5);
 Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
 Vec2 top_right_rectangle = Vec2(0.75, 0.75);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
@@ -228,12 +227,9 @@ static void draw_density(void)
 		}
 	}
 	glEnd();
-	// printf("Done drawing densities...\n");
 	mObj->draw(1.0 / N);
-	// printf("Done drawing object...\n");
+
 	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
-	// printf("Done drawing rb...\n");
-	// exit(0)
 }
 
 /*
@@ -268,6 +264,7 @@ static void get_from_UI(float* d, float* u, float* v)
 		int prevx = (int)((omx / (float)win_x) * N + 1);
 		int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
 		mObj->setCenter(i, j, N);
+		std::cout << u[0] << std::endl;
 		mObj->force(u, v, dens, N);
 
 	}
@@ -363,7 +360,6 @@ static void idle_func(void)
 		// Count time
 		current_time += dt;
 	}
-
 	glutSetWindow(win_id);
 	glutPostRedisplay();
 }
