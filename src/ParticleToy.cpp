@@ -23,6 +23,8 @@
 #include "Rigidbody.h"
 #include "RigidbodyCollection.h"
 #include "Shape.h"
+#include <cstring>
+
 
 
 
@@ -39,7 +41,7 @@ extern std::vector<std::vector<int>> edges;
 
 /* global variables */
 
-Object* mObj = new Object(20, 20, 5);
+Object* mObj = new Object(20, 20, 6);
 Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
 Vec2 top_right_rectangle = Vec2(0.75, 0.75);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
@@ -51,6 +53,7 @@ static float force, source;
 static int dvel;
 static int dgrid; // draw grid
 static int dosim = !0;
+static int override_dosim = 0;
 static int draw_mode_rigidbodies = 0;
 
 static float* u, * v, * u_prev, * v_prev;
@@ -208,6 +211,7 @@ static void draw_density(void)
 			if (DEBUG_DRAWING){
 				y = (j-1)*h;
 				d00 = dens[IX(i, j)];
+				if (d00 <= 0.001) continue;
 				glColor3f(d00, d00, d00); glVertex2f(x, y);
 				glColor3f(d00, d00, d00); glVertex2f(x + h, y);
 				glColor3f(d00, d00, d00); glVertex2f(x + h, y + h);
@@ -219,7 +223,7 @@ static void draw_density(void)
 				d01 = dens[IX(i, j + 1)];
 				d10 = dens[IX(i + 1, j)];
 				d11 = dens[IX(i + 1, j + 1)];
-
+				if (d00 + d01 + d10 + d11 <= 0.001) continue;
 
 				glColor3f(d00, d00, d00); glVertex2f(x, y);
 				glColor3f(d10, d10, d10); glVertex2f(x + h, y);
@@ -229,9 +233,6 @@ static void draw_density(void)
 		}
 	}
 	glEnd();
-	mObj->draw(1.0 / N);
-
-	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 }
 
 /*
@@ -244,9 +245,9 @@ static void get_from_UI(float* d, float* u, float* v)
 {
 	int i, j, size = (N + 2) * (N + 2);
 
-	for (i = 0; i < size; i++) {
-		u[i] = v[i] = d[i] = 0.0f;
-	}
+	// for (i = 0; i < size; i++) {
+	// 	u[i] = v[i] = d[i] = 0.0f;
+	// }
 
 	i = (int)((mx / (float)win_x) * N + 1);
 	j = (int)(((win_y - my) / (float)win_y) * N + 1);
@@ -254,12 +255,13 @@ static void get_from_UI(float* d, float* u, float* v)
 	if (i<1 || i>N || j<1 || j>N) return;
 
 	if (mouse_down[0]) {
-		u[IX(i, j)] = force * (mx - omx);
-		v[IX(i, j)] = force * (omy - my);
+		// printf("Clicked LMB! mx: %i omx: %i my: %i omy: %i\n", mx, omx, my, omy);
+		u[IX(i, j)] += force * (mx - omx);
+		v[IX(i, j)] += force * (omy - my);
 	}
 
 	if (mouse_down[2]) {
-		d[IX(i, j)] = source;
+		d[IX(i, j)] += source;
 	}
 	if (mouse_down[1])
 	{
@@ -274,6 +276,12 @@ static void get_from_UI(float* d, float* u, float* v)
 	omy = my;
 
 	return;
+}
+
+static void clear_UI_data(float * d, float * u, float * v){
+	std::memset(d, 0, (N+2)*(N+2)*sizeof(float));
+	std::memset(u, 0, (N+2)*(N+2)*sizeof(float));
+	std::memset(v, 0, (N+2)*(N+2)*sizeof(float));
 }
 
 /*
@@ -322,6 +330,11 @@ static void key_func(unsigned char key, int x, int y)
 	case 'P':
 		dosim = !dosim;
 		break;
+
+	case '.':
+	case '>':
+		override_dosim += 1;
+		break;
 	}
 }
 
@@ -335,6 +348,8 @@ static void mouse_func(int button, int state, int x, int y)
 
 static void motion_func(int x, int y)
 {
+	omx = mx;
+	omy = my;
 	mx = x;
 	my = y;
 }
@@ -350,16 +365,18 @@ static void reshape_func(int width, int height)
 
 static void idle_func(void)
 {
-	if (dosim){
-		get_from_UI(dens_prev, u_prev, v_prev);
+	get_from_UI(dens_prev, u_prev, v_prev);
+	if (override_dosim != 0 || dosim != 0){
 		vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 		dens_step(N, dens, dens_prev, u, v, diff, dt);
-
+		clear_UI_data(dens_prev, u_prev, v_prev);
 		// update rigidbodycollection
 		rbc.step(dt);
 
 		// Count time
 		current_time += dt;
+		override_dosim--;
+		if (override_dosim < 0) override_dosim=0;
 	}
 	glutSetWindow(win_id);
 	glutPostRedisplay();
@@ -370,9 +387,14 @@ static void display_func(void)
 {
 	pre_display();
 
+	if (dgrid) draw_gridlines();
 	if (dvel) draw_velocity();
 	else		draw_density();
-	if (dgrid) draw_gridlines();
+
+	
+	mObj->draw(1.0 / N);
+
+	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 	
 	//update title
 	float dens_sum = 0;
@@ -380,8 +402,6 @@ static void display_func(void)
     sprintf(title_buff, "Assignment 2 - t: %.3f - total dens: %.3f", current_time, dens_sum);
     glutSetWindowTitle(title_buff);
 	
-	// if (dosim) printf("============================================\n");
-	// if (dosim) rbc.print();
 
 
 	post_display();
@@ -480,7 +500,8 @@ int main(int argc, char** argv)
 
 	if (!allocate_data()) exit(1);
 	clear_data();
-
+	omx = 0;
+	omy = 0;
 	win_x = 512;
 	win_y = 512;
 	open_glut_window();

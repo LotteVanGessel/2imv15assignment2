@@ -19,27 +19,21 @@ void Object::reset() {
 
 void Object::draw(float h) {
 
-	float x0 = (cenX - size) * h;
-	float x1 = (cenX + size - 1) * h;
-	float y0 = (cenY - size) * h;
-	float y1 = (cenY + size - 1) * h;
+	float x0 = (cenX - size - 1) * h;
+	float x1 = (cenX + size) * h;
+	float y0 = (cenY - size - 1) * h;
+	float y1 = (cenY + size) * h;
 
-	glBegin(GL_LINES);
-	glLineWidth(2.0f);
+	glBegin(GL_QUADS);
+	glLineWidth(4.0f);
 	//Pink?
 	glColor3f(0.7f, 0.5f, 0.5f);
 
 	glVertex2f(x0, y0);
 	glVertex2f(x1, y0);
 
-	glVertex2f(x1, y0);
-	glVertex2f(x1, y1);
-
 	glVertex2f(x1, y1);
 	glVertex2f(x0, y1);
-
-	glVertex2f(x0, y1);
-	glVertex2f(x0, y0);
 	
 	glEnd();
 }
@@ -92,25 +86,37 @@ void Object::setBound(int N, int b, float* mat)
 	int x = cenX;
 	int y = cenY;
 	int a = size;
-	for (i = x - a; i < x + a - 1; i++) {
-		mat[IX(i, y - a - 1)] = b == 2 ? -mat[IX(i, y - a)] : mat[IX(i, y - a)];
-		mat[IX(i, y + a + 1)] = b == 2 ? -mat[IX(i, y + a)] : mat[IX(i, y + a)];
+	for (i = x - a; i <= x + a; i++) {
+		mat[IX(i, y - a)] = b == 2 ? -mat[IX(i, y - a - 1)] : mat[IX(i, y - a - 1)];
+		mat[IX(i, y + a)] = b == 2 ? -mat[IX(i, y + a + 1)] : mat[IX(i, y + a + 1)];
+		// mat[IX(i, y - a + 1)] = 1;
+		// mat[IX(i, y + a - 1)] = 1;
+		
 	}
-	for (i = y - a; i < y + a - 1; i++) {
-		mat[IX(x - a - 1, i)] = b == 1 ? -mat[IX(x - a, i)] : mat[IX(x - a, i)];
-		mat[IX(x + a + 1, i)] = b == 1 ? -mat[IX(x + a, i)] : mat[IX(x + a, i)];
-
+	for (i = y - a; i <= y + a; i++) {
+		mat[IX(x - a, i)] = b == 1 ? -mat[IX(x - a - 1, i)] : mat[IX(x - a - 1, i)];
+		mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
+		// mat[IX(x - a+1, i)] = 1;
+		// mat[IX(x + a-1, i)] = 1;
 	}
 	int j, k;
 	
-	mat[IX(x - a - 1, y - a - 1)] = 0.5f * (mat[IX(x - a, y - a)] + mat[IX(x - a, y - a)]);
-	mat[IX(x - a - 1, y + a + 1)] = 0.5f * (mat[IX(x - a, y + a)] + mat[IX(x - a, y + a)]);
-	mat[IX(x + a + 1, y - a - 1)] = 0.5f * (mat[IX(x + a, y - a)] + mat[IX(x + a, y  - a)]);
-	mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
+	// mat[IX(x - a - 1, y - a - 1)] = 0.5f * (mat[IX(x - a, y - a)] + mat[IX(x - a, y - a)]);
+	// mat[IX(x - a - 1, y + a + 1)] = 0.5f * (mat[IX(x - a, y + a)] + mat[IX(x - a, y + a)]);
+	// mat[IX(x + a + 1, y - a - 1)] = 0.5f * (mat[IX(x + a, y - a)] + mat[IX(x + a, y - a)]);
+	// mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
+	mat[IX(x-a, y-a)] = 0.5f * (mat[IX(x - a - 1, y - a)] + mat[IX(x-a, y-a-1)]);
 	
-	for (j = x - a + 1; j < x + a ; j++)
+	mat[IX(x+a, y-a)] = 0.5f * (mat[IX(x + a + 1, y - a)] + mat[IX(x+a, y-a-1)]);
+
+	mat[IX(x-a, y+a)] = 0.5f * (mat[IX(x - a - 1, y + a)] + mat[IX(x-a, y+a+1)]);
+
+	mat[IX(x+a, y+a)] = 0.5f * (mat[IX(x + a + 1, y + a)] + mat[IX(x+a, y+a+1)]);
+
+
+	for (j = x - a + 1; j <= x + a - 1 ; j++)
 	{
-		for (k = y - a + 1; k < y + a; k++)
+		for (k = y - a + 1; k <= y + a - 1; k++)
 		{
 			mat[IX(j, k)] = 0;
 		}
