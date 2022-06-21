@@ -20,15 +20,24 @@ struct Mat2 : Data{
     float& operator()(int r, int c) const;
     Mat2 get_inverse();
     float det();
+    void print();
+};
+
+struct RotMat2 : Mat2{
+    float c, s;
+    void update(float omega);
 };
 
 struct Vec2 : Data{
     Vec2();
     Vec2(float* x);
     Vec2(float x, float y);
+    void print();
 };
 
 inline void swap(Data &x, int i, int j);
+
+Mat2 matmult(const Mat2 &A, const Mat2 &B, Mat2 &R);
 
 void transpose_in_place(Mat2 &mat);
 

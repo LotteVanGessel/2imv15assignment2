@@ -21,18 +21,49 @@ void Shape::post_ctor(){
     calc_rel_points();
 }
 
+inline void calc_point(Mat2 &R, Vec2 &off, Vec2 &v, Vec2 &res){
+    matmult(R, v, res);
+    vecadd(off, res, res);
+}
 
-void Shape::draw(Mat2 &rotation, Vec2 &offset, float r = 1.0f, float g = 1.0f, float b = 1.0f){
+void Shape::draw(Mat2 &rotation, Vec2 &offset, DrawModes::DrawMode mode, float r = 1.0f, float g = 1.0f, float b = 1.0f){
 	glLineWidth(1.0f);
 	glColor3f(r, g, b);
-    glBegin(GL_LINE_LOOP);
     // printf("Matrix R:\n\t[%5.3f\t%5.3f]\n\t[%5.3f\t%5.3f]\nVec offset:\n\t[%5.3f\t%5.3f]\n", rotation[0], rotation[1], rotation[2], rotation[3], offset[0], offset[1]);
-    for (Vec2 & v : rel_points){
-        matmult(rotation, v, temp);
-        vecadd(offset, temp, temp);
-        glVertex2f(temp[0], temp[1]);
+    
+    switch(mode){
+        case DrawModes::LINES:
+            glBegin(GL_LINE_LOOP);
+            for (Vec2 & v : rel_points){
+                calc_point(rotation, offset, v, temp);
+                glVertex2f(temp[0], temp[1]);
+            }
+            break;
+        
+        case DrawModes::TRIS:
+            glBegin(GL_LINES);
+            for (int i = 0; i < triangulation.size(); i+=3){
+                Vec2 & a = rel_points[triangulation[i]];
+                Vec2 & b = rel_points[triangulation[i+1]];
+                Vec2 & c = rel_points[triangulation[i+2]];
+                
+                calc_point(rotation, offset, a, temp);
+                glVertex2f(temp[0], temp[1]);
+                calc_point(rotation, offset, b, temp);
+                glVertex2f(temp[0], temp[1]);
+
+                glVertex2f(temp[0], temp[1]);
+                calc_point(rotation, offset, c, temp);
+                glVertex2f(temp[0], temp[1]);
+
+                glVertex2f(temp[0], temp[1]);
+                calc_point(rotation, offset, a, temp);
+                glVertex2f(temp[0], temp[1]);
+            }
+            break;
     }
-	glEnd();
+	
+    glEnd();
 }
 
 Rect::Rect(Vec2 &botleft, Vec2 &topright){
@@ -63,13 +94,12 @@ void RigidbodyCollection::step(float dt){
     temp = x0; x0 = x1; x1 = temp; // swap x0 and x1, avoid malloc'ing again
     computeforceandtorque();
     //Accumulate dxdt's in y
-    float* y = Dxdt;
-    for (Rigidbody *rb : rbs) rb->dxdt(y);
-
+    int i = 0;
+    for (Rigidbody *rb : rbs) rb->dxdt(Dxdt + (i++)*Rigidbody::STATE_SIZE, dt);
     scalarmult(dt, Dxdt, n); // Dxdt = dt * xdot_k
     vecadd(x0, Dxdt, x1, n); // x1 = x_k + dt * xdot_k, gewoon euler forward
 
-    y = x1;
+    float* y = x1;
     for (Rigidbody *rb : rbs){
         rb->update_state(y);
         y += Rigidbody::STATE_SIZE;
@@ -133,6 +163,15 @@ void RigidbodyCollection::addRB(Rigidbody* rb){
     }
 }
 
+void RigidbodyCollection::draw(DrawModes::DrawMode mode){
+    for (Rigidbody* rb : rbs) rb->draw(mode);
+}
+
+void RigidbodyCollection::print(){
+    printf("Rigidbodycollection has size %i\n", rbs.size());
+    for (int i = 0; i < rbs.size(); i++) { printf("  RB - %i:\n", i); rbs[i]->print(); }
+}
+
 // TODO: Daadwerkelijk forces en torques berekenen
 void RigidbodyCollection::computeforceandtorque(){};
 
@@ -162,16 +201,26 @@ Rigidbody::Rigidbody(Shape shape) : shape(shape){
     v = Vec2();
     F = Vec2();
     tau = Vec2();
+    omega_mat = RotMat2();
+    Rdot = Mat2();
 }
 
-void Rigidbody::dxdt(float* y){
+void Rigidbody::dxdt(float* y, float dt){
     *y++ = v[0];
     *y++ = v[1];
 
-    *y++ = R[0]*omega;
-    *y++ = R[1]*omega;
-    *y++ = R[2]*omega;
-    *y++ = R[3]*omega;
+    omega_mat.update(omega);
+    // (w - I)
+    omega_mat[0] -= 1;
+    omega_mat[3] -= 1;
+    // Rdot = (w - I)R
+    matmult(omega_mat, R, Rdot);
+    // Rdot = (1/dt) * (w - I)R
+    scalarmult(1/dt, Rdot, Rdot);
+    *y++ = Rdot[0];
+    *y++ = Rdot[1];
+    *y++ = Rdot[2];
+    *y++ = Rdot[3];
 
     
     *y++ = F[0];
@@ -181,7 +230,16 @@ void Rigidbody::dxdt(float* y){
     *y++ = tau[1];
 }
 
-void Rigidbody::update_state(float* new_state){ std::memcpy(state, new_state, STATE_SIZE*sizeof(float)); }
-void Rigidbody::draw(){ 
-    shape.draw(R, x, 0.0f, 1.0f, 1.0f); 
+void Rigidbody::update_state(float* new_state){ 
+    std::memcpy(state, new_state, STATE_SIZE*sizeof(float)); 
+}
+void Rigidbody::draw(DrawModes::DrawMode mode){ 
+    shape.draw(R, x, mode, 0.0f, 1.0f, 1.0f); 
+}
+
+void Rigidbody::print(){
+    printf("    x:\n"); x.print();
+    printf("    R:\n"); R.print();
+    printf("    P:\n"); P.print();
+    printf("    L:\n"); L.print();
 }
