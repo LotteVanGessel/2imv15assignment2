@@ -21,12 +21,10 @@
 #include <vector>
 #include "Object.h"
 #include "Rigidbody.h"
+#include <cmath>
 #include "RigidbodyCollection.h"
 #include "Shape.h"
 #include <cstring>
-
-
-
 
 /* macros */
 
@@ -37,7 +35,7 @@ static bool DEBUG_DRAWING = false;
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
-extern std::vector<std::vector<int>> edges;
+extern std::vector<std::vector<Vec2>> edges;
 
 /* global variables */
 
@@ -55,6 +53,8 @@ static int dgrid; // draw grid
 static int dosim = !0;
 static int override_dosim = 0;
 static int draw_mode_rigidbodies = 0;
+static int mouse_mode = 0;
+
 
 static float* u, * v, * u_prev, * v_prev;
 static float* dens, * dens_prev;
@@ -140,7 +140,44 @@ static void post_display(void)
 {
 	glutSwapBuffers();
 }
+static void draw_edges(void) 
+{
+	int i, j;
+	float x, y, h;
 
+	h = 1.0f / N;
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glLineWidth(3.0f);
+
+	glBegin(GL_LINES);
+	for (auto edge : edges)
+	{
+		int diffx = edge[0].data[0];
+		int diffy = edge[0].data[1];
+		int x = edge[1].data[0];
+		int y = edge[1].data[1];
+		if (diffx != 0)
+		{
+			diffx = diffx / fabs(diffx);
+		}
+		if (diffy != 0)
+		{
+			diffy = diffy / fabs(diffy);
+		} 
+		if (diffx > diffy)
+		{
+			diffy = 0;
+		}
+		else
+		{
+			diffx = 0;
+		}
+		glVertex2f(x * h, y * h);
+		glVertex2f((x + diffx) * h, (y + diffy) * h);
+	}
+	glEnd();
+
+}
 static void draw_velocity(void)
 {
 	int i, j;
@@ -263,14 +300,29 @@ static void get_from_UI(float* d, float* u, float* v)
 	if (mouse_down[2]) {
 		d[IX(i, j)] += source;
 	}
-	if (mouse_down[1])
+	if (mouse_mode == 0)
 	{
-		int prevx = (int)((omx / (float)win_x) * N + 1);
-		int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
-		mObj->setCenter(i, j, N);
-		mObj->force(u, v, dens, N);
+		if (mouse_down[1])
+			{
+				int prevx = (int)((omx / (float)win_x) * N + 1);
+				int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
+				mObj->setCenter(i, j, N);
+				mObj->force(u, v, dens, N);
 
+			}
 	}
+	else
+	{
+		int diffx = (mx - omx);
+		int  diffy = (omy - my);
+		int x = (int)((mx / (float)win_x) * N + 1);
+		int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
+ 		Vec2 prev = Vec2(diffx, diffy);
+		Vec2 now = Vec2(x, y);
+		std::vector<Vec2> edge = { prev, now };
+		edges.push_back(edge);
+	}
+	
 
 	omx = mx;
 	omy = my;
@@ -335,7 +387,12 @@ static void key_func(unsigned char key, int x, int y)
 	case '>':
 		override_dosim += 1;
 		break;
+	case 'e':
+	case 'E':
+		mouse_mode = mouse_mode == 0 ? 1 : 0;
+		break;
 	}
+
 }
 
 static void mouse_func(int button, int state, int x, int y)
@@ -393,7 +450,7 @@ static void display_func(void)
 
 	
 	mObj->draw(1.0 / N);
-
+	draw_edges();
 	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 	
 	//update title

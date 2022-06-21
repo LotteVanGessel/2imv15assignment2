@@ -24,7 +24,7 @@ void Object::draw(float h) {
 	float y0 = (cenY - size - 1) * h;
 	float y1 = (cenY + size) * h;
 
-	int mode = 0;
+	int mode = 1;
 	glBegin(mode == 0 ? GL_LINE_LOOP : GL_QUADS);
 	glLineWidth(4.0f);
 	//Pink?
@@ -142,7 +142,7 @@ void Object::force(float* u, float* v, float* dens, int N)
 		for (int j = cenY - size+1; j < cenY + size; j++) {
 			dens[IX(ahead, j)] += dens[IX(ahead - sign_x, j)];
 			dens[IX(behind, j)] = 0;
-			u[IX(ahead, j)] += sign_x * dens[IX(ahead, j)] * 10; // TODO: arbitrary constant
+			u[IX(ahead, j)] += sign_x * dens[IX(ahead, j)] * 20; 
 		}
 
 		//hoekjes

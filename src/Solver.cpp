@@ -2,6 +2,7 @@
 #include <typeinfo>
 #include <math.h>
 #include <vector>
+#include "Rigidbody.h"
 #include "Object.h"
 
 #define IX(i,j) ((i)+(N+2)*(j))
@@ -13,7 +14,7 @@
 using namespace std;
 
 extern Object* mObj;
-std::vector<std::vector<int>> edges; 
+std::vector<std::vector< Vec2>> edges;
 
 
 void add_source(int N, float* x, float* s, float dt)
@@ -22,6 +23,29 @@ void add_source(int N, float* x, float* s, float dt)
 	for (i = 0; i < size; i++) x[i] += dt * s[i];
 }
 
+void set_edge(std::vector<std::vector< Vec2>> edges, int b, int N, float* x)
+{
+	for (auto edge : edges)
+	{
+		int diffx = edge[0].data[0];
+		int diffy = edge[0].data[1];
+		int x1 = edge[1].data[0];
+		int y = edge[1].data[1];
+		diffx = diffx / fabs(diffx);
+		diffx = diffy / fabs(diffy);
+		if (diffx > diffy)
+		{
+			diffy = 0;
+		}
+		else
+		{
+			diffx = 0;
+		}
+		x[IX(x1, y)] = x[IX(x1 + diffx, y + diffy)];
+	}
+
+
+}
 
 void set_bnd(int N, int b, float* x)
 {
@@ -49,6 +73,7 @@ void lin_solve(int N, int b, float* x, float* x0, float a, float c)
 		END_FOR
 			set_bnd(N, b, x);
 			mObj->setBound(N, b,  x);
+			set_edge(edges, b, N, x);
 	}
 }
 
@@ -74,6 +99,7 @@ void advect(int N, int b, float* d, float* d0, float* u, float* v, float dt)
 	END_FOR
 		set_bnd(N, b, d);
 		mObj->setBound( N, b,  d);
+		set_edge(edges, b, N, d);
 }
 
 void project(int N, float* u, float* v, float* p, float* div)
@@ -84,14 +110,15 @@ void project(int N, float* u, float* v, float* p, float* div)
 		div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] + v[IX(i, j + 1)] - v[IX(i, j - 1)]) / N;
 	p[IX(i, j)] = 0;
 	END_FOR
-		set_bnd(N, 0, div); set_bnd(N, 0, p); mObj->setBound(N, 0, p), mObj->setBound(N, 0, div);
+		set_bnd(N, 0, div); set_bnd(N, 0, p); mObj->setBound(N, 0, p), mObj->setBound(N, 0, div); set_edge(edges, 0, N, div); set_edge(edges, 0, N, p);
 	lin_solve(N, 0, p, div, 1, 4);
 
 	FOR_EACH_CELL
 		u[IX(i, j)] -= 0.5f * N * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
 	v[IX(i, j)] -= 0.5f * N * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
 	END_FOR
-		set_bnd(N, 1, u); set_bnd(N, 2, v); mObj->setBound( N, 1, u); mObj->setBound( N, 2,  v);
+		set_bnd(N, 1, u); set_bnd(N, 2, v); mObj->setBound( N, 1, u); mObj->setBound( N, 2,  v); set_edge(edges, 1, N, u); set_edge(edges, 2, N, v);
+
 }
 
 void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt)
