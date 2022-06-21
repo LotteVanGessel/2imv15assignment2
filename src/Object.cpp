@@ -87,18 +87,16 @@ void Object::setBound(int N, int b, float* mat)
 	int x = cenX;
 	int y = cenY;
 	int a = size;
-	for (i = x - a + 1; i <= x + a-1; i++) {
+	for (i = x - a + 1; i < x + a; i++) {
 		if (y-a > 1) mat[IX(i, y - a)] = b == 2 ? -mat[IX(i, y - a - 1)] : mat[IX(i, y - a - 1)];
 		if (y+a < N) mat[IX(i, y + a)] = b == 2 ? -mat[IX(i, y + a + 1)] : mat[IX(i, y + a + 1)];
 		// mat[IX(i, y - a + 1)] = 1;
 		// mat[IX(i, y + a - 1)] = 1;
 		
 	}
-	for (i = y - a+1; i <= y + a-1; i++) {
+	for (i = y - a + 1; i < y + a; i++) {
 		if (x-a > 1) mat[IX(x - a, i)] = b == 1 ? -mat[IX(x - a - 1, i)] : mat[IX(x - a - 1, i)];
 		if (y+a < N) mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
-		// mat[IX(x - a+1, i)] = 1;
-		// mat[IX(x + a-1, i)] = 1;
 	}
 	int j, k;
 	
@@ -127,6 +125,15 @@ void Object::setBound(int N, int b, float* mat)
 }
 
 
+void force_func(float* dens, float* vel, int outside, int inside, int sign_x, float mv, float mult = 1.0f){
+	float old_dens = dens[outside];
+	float moved_dens = dens[inside];
+	
+	dens[outside] += mult * moved_dens;
+	float new_dens = dens[outside];
+	
+	if(new_dens > 0.01f) vel[outside] = mult * sign_x * (mv+old_dens*vel[outside])/new_dens;
+}
 void Object::force(float* u, float* v, float* dens, int N, float dt)
 {
 	int sign_x = velx > 0 ? 1 : -1;
@@ -139,21 +146,61 @@ void Object::force(float* u, float* v, float* dens, int N, float dt)
 	if (sign_x != 0){
 		int ahead = cenX + (size+1)*sign_x;
 		int behind = cenX - (size+1)*sign_x; 
-		for (int j = cenY - size; j <= cenY + size; j++) {
-			dens[IX(ahead, j)] += dens[IX(ahead - sign_x, j)];
+		int outside, inside;
+		for (int j = cenY - size+1; j < cenY + size; j++) {
+			outside = IX(ahead, j);
+			inside = IX(ahead-sign_x, j);
+			
+			force_func(dens, u, outside, inside, sign_x, mv);
+
 			dens[IX(behind, j)] = 0;
-			if(dens[IX(ahead - sign_x, j)] > 0.1f) u[IX(ahead, j)] += sign_x * mv/dens[IX(ahead-sign_x, j)]; // TODO: arbitrary constant
 		}
+
+		inside = IX(ahead-sign_x, cenY-size);
+		outside = IX(ahead, cenY-size);
+		force_func(dens, u, outside, inside, sign_x, mv, 0.5f);
+
+		inside = IX(ahead-sign_x, cenY+size);
+		outside = IX(ahead, cenY+size);
+		force_func(dens, u, outside, inside, sign_x, mv, 0.5f);
+
+		inside = IX(ahead-sign_x, cenY-size);
+		outside = IX(ahead-sign_x, cenY-size-1);
+		force_func(dens, v, outside, inside, -1, mv, 0.5f);
+
+		inside = IX(ahead-sign_x, cenY+size);
+		outside = IX(ahead-sign_x, cenY+size+1);
+		force_func(dens, v, outside, inside, 1, mv, 0.5f);
 	}
 
+
+	
 	if (sign_y != 0){
 		int ahead = cenY + (size+1)*sign_y;
 		int behind = cenY - (size+1)*sign_y; 
-		for (int i = cenX - size; i <= cenX + size; i++) {
-			dens[IX(i, ahead)] += dens[IX(i, ahead-sign_y)];
+		int outside, inside;
+		for (int i = cenX - size+1; i < cenX + size; i++) {
+			inside = IX(i, ahead-sign_y);
+			outside = IX(i, ahead);
+			force_func(dens, v, outside, inside, sign_y, mv);
 			dens[IX(i, behind)] = 0;
-			if(dens[IX(i, ahead-sign_y)] > 0.1f) v[IX(i, ahead)] += sign_y * mv/dens[IX(i, ahead-sign_y)]; // TODO: arbitrary constant
 		}
+
+		inside = IX(cenX-size, ahead-sign_y);
+		outside = IX(cenX-size, ahead);
+		force_func(dens, v, outside, inside, sign_y, mv, 0.5f);
+
+		inside = IX(cenX+size, ahead-sign_y);
+		outside = IX(cenX+size, ahead);
+		force_func(dens, v, outside, inside, sign_y, mv, 0.5f);
+
+		inside = IX(cenX-size, ahead-sign_y);
+		outside = IX(cenX-size-1, ahead-sign_y);
+		force_func(dens, u, outside, inside, -1, mv, 0.5f);
+
+		inside = IX(cenX+size, ahead-sign_y);
+		outside = IX(cenX+size+1, ahead-sign_y);
+		force_func(dens, u, outside, inside,  1, mv, 0.5f);
 	}
 }
 
