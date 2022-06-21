@@ -38,7 +38,7 @@ extern std::vector<std::vector<int>> edges;
 
 /* global variables */
 
-Object* mObj = new Object(20, 20, 5);
+Object* mObj = new Object(20, 20, 7);
 Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
 Vec2 top_right_rectangle = Vec2(0.75, 0.75);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));

@@ -14,18 +14,18 @@ Object::Object(int cX, int cY, int s) {
 void Object::reset() {
 	cenX = 20;
 	cenY = 20;
-	size = 10;
+	size = 5;
 }
 
 void Object::draw(float h) {
 
-	float x0 = (cenX - size - 0.5f) * h;
-	float x1 = (cenX + size - 0.5f) * h;
-	float y0 = (cenY - size - 0.5f) * h;
-	float y1 = (cenY + size - 0.5f) * h;
+	float x0 = (cenX - size) * h;
+	float x1 = (cenX + size - 1) * h;
+	float y0 = (cenY - size) * h;
+	float y1 = (cenY + size - 1) * h;
 
 	glBegin(GL_LINES);
-	glLineWidth(1.0f);
+	glLineWidth(2.0f);
 	//Pink?
 	glColor3f(0.7f, 0.5f, 0.5f);
 
@@ -84,32 +84,35 @@ void Object::setCenter(int cX, int cY, int N)
 	}
 }
 
+
+//works for object
 void Object::setBound(int N, int b, float* mat)
 {
 	int i;
 	int x = cenX;
 	int y = cenY;
 	int a = size;
-	for (i = x - a; i <= x + a; i++) {
-		mat[IX(i, y - a)] = b == 2 ? -mat[IX(i, y - 1 - a)] : mat[IX(i, y - 1 - a)];
-		mat[IX(i, y + a)] = b == 2 ? -mat[IX(i, y + a + 1)] : mat[IX(i, y + a + 1)];
+	for (i = x - a + 1; i < x + a; i++) {
+		mat[IX(i, y - a - 1)] += b == 2 ? -mat[IX(i, y - a)] : mat[IX(i, y - a)];
+		mat[IX(i, y + a + 1)] += b == 2 ? -mat[IX(i, y + a)] : mat[IX(i, y + a)];
 	}
-	for (i = y - a; i <= y + a; i++) {
-		mat[IX(x - a, i)] = b == 1 ? -mat[IX(x - 1 - a, i)] : mat[IX(x - 1 - a, i)];
-		mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
+	for (i = y - a + 1; i < y + a; i++) {
+		mat[IX(x - a - 1, i)] += b == 1 ? -mat[IX(x - a, i)] : mat[IX(x - a, i)];
+		mat[IX(x + a + 1, i)] += b == 1 ? -mat[IX(x + a, i)] : mat[IX(x + a, i)];
+
 	}
 	int j, k;
-	for (j = x + 1 - a; j <= x + a - 1; j++)
+	for (j = x - a + 1; j < x + a ; j++)
 	{
-		for (k = y + 1 - a; k <= y + a - 1; k++)
+		for (k = y - a + 1; k < y + a; k++)
 		{
 			mat[IX(j, k)] = 0;
 		}
 	}
-	mat[IX(x - a, y - a)] = 0.5f * (mat[IX(x - 1 - a , y - a)] + mat[IX(x - a , y - 1 - a)]);
-	mat[IX(x - a, y + a)] = 0.5f * (mat[IX(x - 1 - a, y + a)] + mat[IX(x - a, y + a + 1)]);
-	mat[IX(x + a, y - a)] = 0.5f * (mat[IX(x + a + 1, y - a)] + mat[IX(x + a, y - 1  - a)]);
-	mat[IX(x + a, y + a)] = 0.5f * (mat[IX(x + a + 1, y + a)] + mat[IX(x + a, y + a + 1)]);
+	mat[IX(x - a - 1, y - a - 1)] = 0.5f * (mat[IX(x - a, y - a)] + mat[IX(x - a, y - a)]);
+	mat[IX(x - a - 1, y + a + 1)] = 0.5f * (mat[IX(x - a, y + a)] + mat[IX(x - a, y + a)]);
+	mat[IX(x + a + 1, y - a - 1)] = 0.5f * (mat[IX(x + a, y - a)] + mat[IX(x + a, y  - a)]);
+	mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
 }
 
 /* Does not yet work completely. Problems: 
@@ -120,141 +123,25 @@ void Object::setBound(int N, int b, float* mat)
 
 void Object::force(float* u, float* v, float* dens, int N)
 {
-	// X velocity is negative. 
-	// So we are looking at the xo side  of the square
-	if (velx < 0) 
-	{
-		int i = cenX - size;
-		for (int j = cenY - size + 1; j < cenY + size; j++)
-		{
-			dens[IX(i - 1, j)] += dens[IX(i, j)];
-			dens[IX(i, j)] = 0;
-			u[IX(i - 1, j)] -= dens[IX(i, j)];
-		}
-		
-		// Y velocity is positive 
-		// So we are looking at the y1 side of the square. So vx neg, vy pos means upper left corner. 
-
-		if (vely > 0)
-		{
-			dens[IX(cenX - size, cenY + size + 1)] += 0.5f * dens[IX(cenX - size, cenY + size)];
-			dens[IX(cenX - size - 1, cenY + size)] += 0.5f * dens[IX(cenX - size, cenY + size)];
-			dens[IX(cenX - size - 1, cenY - size)] += dens[IX(cenX - size, cenY - size)];
-			v[IX(cenX - size - 1, cenY + size)] += 0.5f * dens[IX(cenX - size, cenY + size)];
-			v[IX(cenX - size, cenY + size + 1)] += 0.5f * dens[IX(cenX - size, cenY + size)];
-			v[IX(cenX - size - 1, cenY - size)] += dens[IX(cenX - size, cenY - size)];
-		}
-		// Y velocity is negative 
-		// So we are looking at the y0 side of the sqyare. So vx neg, vy neg means bottom left corner
-		if (vely < 0)
-		{
-			dens[IX(cenX - size - 1, cenY - size)] += 0.5f * dens[IX(cenX - size, cenY - size)];
-			dens[IX(cenX - size, cenY - size - 1)] += 0.5f * dens[IX(cenX - size, cenY - size)];
-			dens[IX(cenX - size - 1, cenY + size)] +=  dens[IX(cenX - size, cenY + size)];
-			v[IX(cenX - size - 1, cenY - size)] -= 0.5f * dens[IX(cenX - size, cenY - size)];
-			v[IX(cenX - size, cenY - size - 1)] += 0.5f * dens[IX(cenX - size, cenY - size)];
-			v[IX(cenX - size - 1, cenY + size)] += dens[IX(cenX - size, cenY + size)];
-		}
-		if (vely == 0)
-		{
-			dens[IX(cenX - size - 1, cenY - size)] += dens[IX(cenX - size, cenY - size)];
-			dens[IX(cenX - size - 1, cenY + size)] += dens[IX(cenX - size, cenY + size)];
-		}
-	}
-
-	//Vx is positive
-	if (velx > 0)
-	{
-		int i = cenX + size;
-		for (int j = cenY - size + 1; j < cenY + size; j++)
-		{
-			dens[IX(i + 1, j)] += dens[IX(i, j)];
-			dens[IX(i, j)] = 0;
-			u[IX(i + 1, j)] += dens[IX(i, j)];
-		}
-		// Y velocity is positive
-		// So we are looking at he yo side of teh square. So vx pos, vy pos means upper right corner. 
-		if (vely > 0)
-		{
-			dens[IX(cenX + size + 1, cenY + size)] += 0.5f * dens[IX(cenX + size, cenY + size)];
-			dens[IX(cenX + size, cenY + size + 1 )] += 0.5f * dens[IX(cenX + size, cenY + size)];
-			dens[IX(cenX + size + 1 , cenY - size)] += dens[IX(cenX + size, cenY - size)];
-			v[IX(cenX + size + 1, cenY + size)] += 0.5f * dens[IX(cenX + size, cenY + size)];
-			v[IX(cenX + size, cenY + size + 1)] += 0.5f * dens[IX(cenX + size, cenY + size)];
-			v[IX(cenX + size + 1, cenY - size)] += dens[IX(cenX + size, cenY - size)];
-			dens[IX(cenX + size, cenY - size)] = 0;
-			dens[IX(cenX + size, cenY + size)] = 0;
-		}
-		//Y velocity is negative
-		// So we are looking at the y1 side of the square. So vx pos, vy neg means bottom right corner. 
-		if (vely < 0)
-		{
-			dens[IX(cenX + size + 1, cenY - size)] += 0.5f * dens[IX(cenX + size, cenY - size)];
-			dens[IX(cenX + size, cenY - size - 1)] += 0.5f * dens[IX(cenX + size, cenY - size)];
-			dens[IX(cenX + size + 1, cenY + size)] += dens[IX(cenX + size, cenY + size)];
-			v[IX(cenX + size + 1, cenY - size)] += 0.5f * dens[IX(cenX + size, cenY - size)];
-			v[IX(cenX + size, cenY - size - 1)] += 0.5f * dens[IX(cenX + size, cenY - size)];
-			v[IX(cenX + size + 1, cenY + size)] += dens[IX(cenX + size, cenY + size)];
-			dens[IX(cenX + size, cenY - size)] = 0;
-			dens[IX(cenX + size, cenY + size)] = 0;
-		}
-		if (vely == 0)
-		{
-			dens[IX(cenX + size + 1, cenY - size)] += dens[IX(cenX + size, cenY - size)];
-			dens[IX(cenX + size + 1, cenY + size)] += dens[IX(cenX + size, cenY + size)];
-			dens[IX(cenX + size, cenY - size)] = 0;
-			dens[IX(cenX + size, cenY + size)] = 0;
-		}
-	}
-
-	if (vely < 0)
-	{
-		int i = cenY - size;
-		for (int j = cenX - size + 1; j < cenX + size; j++)
-		{
-			dens[IX(j, i - 1)] += dens[IX(j, i)];
-			v[IX(j, i - 1)] += dens[IX(j, i)];
-			dens[IX(j, i)] = 0;
-		}
-		if (velx == 0)
-		{
-			dens[cenX - size, cenY - size - 1] += dens[cenX - size, cenY - size];
-			dens[cenX - size, cenY - size] = 0;
-		}
-		
-	}
-
-	if (vely > 0)
-	{
-		int i = cenY + size;
-		for (int j = cenX - size + 1; j < cenX + size; j++)
-		{
-			dens[IX(j, i + 1)] += dens[IX(j, i)];
-			v[IX(j, i + 1)] += dens[IX(j, i)];
-			dens[IX(j, i)] = 0;
-		}
-		if (velx == 0)
-		{
-			dens[cenX - size, cenY + size + 1] += dens[cenX - size, cenY + size];
-			dens[cenX - size, cenY + size] = 0;
-		}
-	}
+	int sign_x = velx > 0 ? 1 : -1;
+	sign_x = velx == 0 ? 0 : sign_x;
+	int sign_y = vely > 0 ? 1 : -1;
+	sign_y = vely == 0 ? 0 : sign_y;
 	
-	/*if (vely == 0 && velx == 0)
-	{
-		for (int i = cenX - size; i < cenX + size + 1; i++)
-		{
-			dens[IX(i, cenY - size - 1)] += dens[IX(i, cenY - size)];
-			dens[IX(i, cenY + size + 1)] += dens[IX(i, cenY + size)];
-		}
+	int posx = cenX + size * sign_x;
+	for (int j = cenY - size + 1; j < cenY + size; j++) {
+		dens[IX(posx + 1 * sign_x, j)] += dens[IX(posx, j)];
+		dens[IX(posx, j)] = 0;
 
-		for (int i = cenY - size; i < cenY + size + 1; i++)
-		{
-			dens[IX(cenX - size - 1, i)] += dens[IX(cenX - size, i)];
-			dens[IX(cenX + size + 1, i)] += dens[IX(cenX + size, i)];
-		}
-	}*/
+	}
+	int posy = cenY + size * sign_y;
+	for (int i = cenX - size + 1; i < cenX + size; i++) {
+		dens[IX(i, posy + 1 * sign_y)] += dens[IX(i, posy)];
+		dens[IX(i, posy)] = 0;
+
+	}
 }
+
 
 void Object::velocity(int vx, int vy)
 {
