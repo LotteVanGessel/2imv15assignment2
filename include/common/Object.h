@@ -8,6 +8,8 @@ public:
 	int size;
 	int velx;
 	int vely;
+
+	float mass = 100.0f;
 	
 	Object(int cX, int cY, int s);
 	void reset();
