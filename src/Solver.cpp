@@ -85,7 +85,6 @@ void project(int N, float* u, float* v, float* p, float* div)
 	p[IX(i, j)] = 0;
 	END_FOR
 		set_bnd(N, 0, div); set_bnd(N, 0, p); mObj->setBound(N, 0, p), mObj->setBound(N, 0, div);
-
 	lin_solve(N, 0, p, div, 1, 4);
 
 	FOR_EACH_CELL
@@ -126,7 +125,8 @@ void vorticity(int N, float* u, float* v, float * vor)
 		}
 		u[IX(i, j)] += dwdy * vor[IX(i, j)] * 1.0 / N * 0.5;
 		v[IX(i, j)] -= dwdx * vor[IX(i, j)] * 1.0 / N * 0.5;
-		END_FOR
+	END_FOR
+
 }
 
 void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor)

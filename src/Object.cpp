@@ -92,16 +92,22 @@ void Object::setBound(int N, int b, float* mat)
 	int x = cenX;
 	int y = cenY;
 	int a = size;
-	for (i = x - a + 1; i < x + a; i++) {
-		mat[IX(i, y - a - 1)] += b == 2 ? -mat[IX(i, y - a)] : mat[IX(i, y - a)];
-		mat[IX(i, y + a + 1)] += b == 2 ? -mat[IX(i, y + a)] : mat[IX(i, y + a)];
+	for (i = x - a; i < x + a - 1; i++) {
+		mat[IX(i, y - a - 1)] = b == 2 ? -mat[IX(i, y - a)] : mat[IX(i, y - a)];
+		mat[IX(i, y + a + 1)] = b == 2 ? -mat[IX(i, y + a)] : mat[IX(i, y + a)];
 	}
-	for (i = y - a + 1; i < y + a; i++) {
-		mat[IX(x - a - 1, i)] += b == 1 ? -mat[IX(x - a, i)] : mat[IX(x - a, i)];
-		mat[IX(x + a + 1, i)] += b == 1 ? -mat[IX(x + a, i)] : mat[IX(x + a, i)];
+	for (i = y - a; i < y + a - 1; i++) {
+		mat[IX(x - a - 1, i)] = b == 1 ? -mat[IX(x - a, i)] : mat[IX(x - a, i)];
+		mat[IX(x + a + 1, i)] = b == 1 ? -mat[IX(x + a, i)] : mat[IX(x + a, i)];
 
 	}
 	int j, k;
+	
+	mat[IX(x - a - 1, y - a - 1)] = 0.5f * (mat[IX(x - a, y - a)] + mat[IX(x - a, y - a)]);
+	mat[IX(x - a - 1, y + a + 1)] = 0.5f * (mat[IX(x - a, y + a)] + mat[IX(x - a, y + a)]);
+	mat[IX(x + a + 1, y - a - 1)] = 0.5f * (mat[IX(x + a, y - a)] + mat[IX(x + a, y  - a)]);
+	mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
+	
 	for (j = x - a + 1; j < x + a ; j++)
 	{
 		for (k = y - a + 1; k < y + a; k++)
@@ -109,10 +115,6 @@ void Object::setBound(int N, int b, float* mat)
 			mat[IX(j, k)] = 0;
 		}
 	}
-	mat[IX(x - a - 1, y - a - 1)] = 0.5f * (mat[IX(x - a, y - a)] + mat[IX(x - a, y - a)]);
-	mat[IX(x - a - 1, y + a + 1)] = 0.5f * (mat[IX(x - a, y + a)] + mat[IX(x - a, y + a)]);
-	mat[IX(x + a + 1, y - a - 1)] = 0.5f * (mat[IX(x + a, y - a)] + mat[IX(x + a, y  - a)]);
-	mat[IX(x + a + 1, y + a + 1)] = 0.5f * (mat[IX(x + a, y + a)] + mat[IX(x + a, y + a)]);
 }
 
 
@@ -124,7 +126,7 @@ void Object::force(float* u, float* v, float* dens, int N)
 	sign_y = vely == 0 ? 0 : sign_y;
 	
 	int posx = cenX + size * sign_x;
-	for (int j = cenY - size + 1; j < cenY + size; j++) {
+	for (int j = cenY - size + 1; j < cenY + size ; j++) {
 		dens[IX(posx + 1 * sign_x, j)] += dens[IX(posx, j)];
 		dens[IX(posx, j)] = 0;
 		u[IX(posx + 1 * sign_x, j)] += sign_x * dens[IX(posx, j)] * 10;
