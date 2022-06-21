@@ -314,14 +314,18 @@ static void get_from_UI(float* d, float* u, float* v)
 	}
 	else
 	{
-		int diffx = (mx - omx);
-		int  diffy = (omy - my);
-		int x = (int)((mx / (float)win_x) * N + 1);
-		int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
- 		Vec2 prev = Vec2(diffx, diffy);
-		Vec2 now = Vec2(x, y);
-		std::vector<Vec2> edge = { prev, now };
-		edges.push_back(edge);
+		if (mouse_down[1]) 
+		{
+			int diffx = (mx - omx);
+			int  diffy = (omy - my);
+			int x = (int)((mx / (float)win_x) * N + 1);
+			int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
+ 			Vec2 prev = Vec2(diffx, diffy);
+			Vec2 now = Vec2(x, y);
+			std::vector<Vec2> edge = { prev, now };
+			edges.push_back(edge);
+		}
+		
 	}
 	
 

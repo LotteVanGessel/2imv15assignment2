@@ -132,7 +132,7 @@ void force_func(float* dens, float* vel, int outside, int inside, int sign_x, fl
 	dens[outside] += mult * moved_dens;
 	float new_dens = dens[outside];
 	
-	if(new_dens > 0.01f) vel[outside] = mult * sign_x * (mv+old_dens*vel[outside])/new_dens;
+	if(new_dens > 1.0f) vel[outside] = mult * sign_x * (mv+old_dens*vel[outside])/new_dens;
 }
 
 void Object::force(float* u, float* v, float* dens, int N, float dt)
