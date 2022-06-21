@@ -40,6 +40,7 @@ extern std::vector<std::vector<Vec2>> edges;
 /* global variables */
 
 Object* mObj = new Object(20, 20, 6);
+int targetx = 20, targety = 20;
 Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
 Vec2 top_right_rectangle = Vec2(0.75, 0.75);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
@@ -424,6 +425,10 @@ static void idle_func(void)
 {
 	get_from_UI(dens_prev, u_prev, v_prev);
 	if (override_dosim != 0 || dosim != 0){
+
+		mObj->setCenter(targetx, targety, N);
+		mObj->force(u, v, dens, N, dt);
+
 		vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
 		dens_step(N, dens, dens_prev, u, v, diff, dt);
 		clear_UI_data(dens_prev, u_prev, v_prev);
@@ -455,7 +460,11 @@ static void display_func(void)
 	
 	//update title
 	float dens_sum = 0;
-	for(int x = 1; x <= N; x++) for (int y = 1; y <= N; y++) dens_sum += dens[IX(x, y)];
+	for(int x = 1; x <= N; x++) for (int y = 1; y <= N; y++){
+		if (x >= mObj->cenX-mObj->size && x <= mObj->cenX+mObj->size && 
+		    y >= mObj->cenY-mObj->size && y <= mObj->cenY+mObj->size) continue;
+		dens_sum += dens[IX(x, y)];
+	} 
     sprintf(title_buff, "Assignment 2 - t: %.3f - total dens: %.3f", current_time, dens_sum);
     glutSetWindowTitle(title_buff);
 	
@@ -523,10 +532,10 @@ int main(int argc, char** argv)
 	if (argc == 1) {
 		N = 64;
 		dt = 0.01f;
-		diff = 0.0f;
-		visc = 0.0f;
+		diff = 0.001f;
+		visc = 0.01f;
 		force = 5.0f;
-		source = 100.0f;
+		source = 1000.0f;
 		fprintf(stderr, "Using defaults : N=%d dt=%g diff=%g visc=%g force = %g source=%g\n",
 			N, dt, diff, visc, force, source);
 	}
@@ -549,6 +558,7 @@ int main(int argc, char** argv)
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
 	printf("\t|   'r': Cycle (r)igidbody drawing mode                 |\n");
 	printf("\t|   'p': (P)ause                                        |\n");
+	printf("\t|   '>': Step forward once (can be done while paused)   |\n");
 	printf("\t|   'q': (Q)uit                                         |\n");
 	printf("\t*-------------------------------------------------------*\n");
 
