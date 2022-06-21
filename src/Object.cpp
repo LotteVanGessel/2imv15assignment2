@@ -134,6 +134,7 @@ void force_func(float* dens, float* vel, int outside, int inside, int sign_x, fl
 	
 	if(new_dens > 0.01f) vel[outside] = mult * sign_x * (mv+old_dens*vel[outside])/new_dens;
 }
+
 void Object::force(float* u, float* v, float* dens, int N, float dt)
 {
 	int sign_x = velx > 0 ? 1 : -1;

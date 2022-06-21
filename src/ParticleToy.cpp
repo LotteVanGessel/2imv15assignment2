@@ -308,7 +308,7 @@ static void get_from_UI(float* d, float* u, float* v)
 				int prevx = (int)((omx / (float)win_x) * N + 1);
 				int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
 				mObj->setCenter(i, j, N);
-				mObj->force(u, v, dens, N);
+				mObj->force(u, v, dens, N, dt);
 
 			}
 	}
