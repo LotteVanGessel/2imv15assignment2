@@ -4,6 +4,9 @@
 #include <vector>
 #include "Rigidbody.h"
 #include "Object.h"
+#include <set>
+#include <utility>
+#include "EdgeSet.h"
 
 #define IX(i,j) ((i)+(N+2)*(j))
 #define SWAP(x0,x) {float * tmp=x0;x0=x;x=tmp;}
@@ -14,7 +17,9 @@
 using namespace std;
 
 extern Object* mObj;
-std::vector<std::vector< Vec2>> edges;
+std::set<Edge> edges;
+
+
 
 
 void add_source(int N, float* x, float* s, float dt)
@@ -23,14 +28,14 @@ void add_source(int N, float* x, float* s, float dt)
 	for (i = 0; i < size; i++) x[i] += dt * s[i];
 }
 
-void set_edge(std::vector<std::vector< Vec2>> edges, int b, int N, float* x)
+void set_edge(std::set<Edge> edges, int b, int N, float* x)
 {
 	for (auto edge : edges)
 	{
-		int diffx = edge[0].data[0];
-		int diffy = edge[0].data[1];
-		int x1 = edge[1].data[0];
-		int y = edge[1].data[1];
+		int diffx = edge.a.x;
+		int diffy = edge.a.y;
+		int x1 = edge.b.x;
+		int y = edge.b.y;
 		diffx = diffx / fabs(diffx);
 		diffx = diffy / fabs(diffy);
 		if (diffx > diffy)

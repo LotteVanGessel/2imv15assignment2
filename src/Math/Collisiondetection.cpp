@@ -121,6 +121,7 @@ bool CollisionHelper::is_legal_position(){
         if (!c.step()){
             last_result_is_legal_position = false;
             // Dit moet uiteindelijk wel gebeuren, nu nog niet want testen
+            printf("Collision detected...\n");
             // return false;
         } 
     }

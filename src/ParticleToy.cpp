@@ -26,6 +26,8 @@
 #include "Shape.h"
 #include <cstring>
 #include <set>
+#include <utility>
+#include "EdgeSet.h"
 
 /* macros */
 
@@ -36,7 +38,10 @@ static bool DEBUG_DRAWING = false;
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
 extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
-extern std::vector<std::vector<Vec2>> edges;
+
+extern std::set<Edge> edges;
+
+
 
 /* global variables */
 
@@ -153,12 +158,12 @@ static void draw_edges(void)
 	glLineWidth(3.0f);
 
 	glBegin(GL_LINES);
-	for (auto edge : edges)
+	for (const Edge & edge : edges)
 	{
-		int diffx = edge[0].data[0];
-		int diffy = edge[0].data[1];
-		int x = edge[1].data[0];
-		int y = edge[1].data[1];
+		int diffx = edge.a.x;
+		int diffy = edge.a.y;
+		int x = edge.b.x;
+		int y = edge.b.y;
 		if (diffx != 0)
 		{
 			diffx = diffx / fabs(diffx);
@@ -322,12 +327,12 @@ static void get_from_UI(float* d, float* u, float* v)
 			int  diffy = (omy - my);
 			int x = (int)((mx / (float)win_x) * N + 1);
 			int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
- 			Vec2 prev = Vec2(diffx, diffy);
-			Vec2 now = Vec2(x, y);
-			std::vector<Vec2> edge = { prev, now };
-			edges.push_back(edge);
+ 			Point prev = Point(diffx, diffy);
+			Point now = Point(x, y);
+			Edge edge = {prev, now};
+			edges.insert(edge);
+			printf("%i\n", edges.size());
 		}
-		
 	}
 	
 
@@ -538,6 +543,7 @@ int main(int argc, char** argv)
 	if (argc == 1) {
 		N = 64;
 		dt = 0.01f;
+		dt = 1/144.0;
 		diff = 0.0f;
 		visc = 0.0f;
 		force = 5.0f;
