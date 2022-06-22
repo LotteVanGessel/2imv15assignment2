@@ -20,7 +20,6 @@ extern Object* mObj;
 std::set<Edge> edges;
 
 
-
 void add_source(int N, float* x, float* s, float dt)
 {
 	int i, size = (N + 2) * (N + 2);

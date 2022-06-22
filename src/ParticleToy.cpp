@@ -338,10 +338,8 @@ static void get_from_UI(float* d, float* u, float* v)
 			}else{
 				diffy = fracty < 0.5 ? -1 : 1;
 			}
-			printf("xd: %.3f yd: %.3f fractx: %.3f fracty: %.3f diffx: %i diffy: %i\n", xd, yd, fractx, fracty, diffx, diffy);
  			Point prev = Point(x+diffx, y+diffy);
 			Point now = Point(x, y);
-			printf("prev: %i %i now: %i %i\n", prev.x, prev.y, now.x, now.y);
 			Edge edge = {prev, now};
 			edges.insert(edge);
 		}
