@@ -1,5 +1,7 @@
 #ifndef EDGESET_H
 #define EDGESET_H
+#include <utility>
+#include "MatrixMath.h"
 
 struct Point{
 	int x, y;
@@ -16,5 +18,7 @@ bool operator==(const Point & p1, const Point & p2);
 bool operator<(const Point & p1, const Point & p2);
 
 bool operator<(const Edge & e1, const Edge & e2);
+
+bool operator<(const std::pair<Point, Vec2> & p1, const std::pair<Point, Vec2> & p2);
 
 #endif

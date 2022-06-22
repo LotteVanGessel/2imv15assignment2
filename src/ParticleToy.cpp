@@ -37,7 +37,7 @@ static bool DEBUG_DRAWING = false;
 /* external definitions (from solver.c) */
 
 extern void dens_step(int N, float* x, float* x0, float* u, float* v, float diff, float dt);
-extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor);
+extern void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, int dovorticity);
 
 extern std::set<Edge> edges;
 
@@ -50,8 +50,7 @@ int targetx = 20, targety = 20;
 Vec2 bot_left_rectangle = Vec2(0.4, 0.4);
 Vec2 top_right_rectangle = Vec2(0.6, 0.6);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
-Rigidbody* rb2;
-Rigidbody* rb3;
+std::vector<Rigidbody*> rbs = std::vector<Rigidbody*>();
 RigidbodyCollection rbc = RigidbodyCollection();
 static int N;
 static float dt, diff, visc;
@@ -59,6 +58,7 @@ static float force, source;
 static int dvel;
 static int dgrid; // draw grid
 static int dosim = !0;
+static int dovorticity = 0;
 static int override_dosim = 0;
 static int draw_mode_rigidbodies = 0;
 static int mouse_mode = 0;
@@ -403,6 +403,11 @@ static void key_func(unsigned char key, int x, int y)
 	case 'E':
 		mouse_mode = mouse_mode == 0 ? 1 : 0;
 		break;
+
+	case 'o':
+	case 'O':
+		dovorticity = !dovorticity;
+		break;
 	}
 
 }
@@ -440,11 +445,12 @@ static void idle_func(void)
 		mObj->setCenter(targetx, targety, N);
 		mObj->force(u, v, dens, N, dt);
 
-		vel_step(N, u, v, u_prev, v_prev, visc, dt, vor);
+		vel_step(N, u, v, u_prev, v_prev, visc, dt, vor, dovorticity);
 		dens_step(N, dens, dens_prev, u, v, diff, dt);
 		clear_UI_data(dens_prev, u_prev, v_prev);
 		// update rigidbodycollection
 		rbc.step(dt);
+		rbc.apply_force_to_liquid(u, v, dt);
 
 		// Count time
 		current_time += dt;
@@ -460,12 +466,12 @@ static void display_func(void)
 {
 	pre_display();
 
-	if (dgrid) draw_gridlines();
 	if (dvel) draw_velocity();
 	else		draw_density();
+	if (dgrid) draw_gridlines();
 
 	
-	// mObj->draw(1.0 / N);
+	mObj->draw(1.0 / N);
 	draw_edges();
 	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 	
@@ -543,11 +549,10 @@ int main(int argc, char** argv)
 	if (argc == 1) {
 		N = 64;
 		dt = 0.01f;
-		dt = 1/144.0;
 		diff = 0.0f;
 		visc = 0.0f;
 		force = 5.0f;
-		source = 100.0f;
+		source = 1000.0f;
 		fprintf(stderr, "Using defaults : N=%d dt=%g diff=%g visc=%g force = %g source=%g\n",
 			N, dt, diff, visc, force, source);
 	}
@@ -565,6 +570,7 @@ int main(int argc, char** argv)
 	printf("\t Add velocities with the left mouse button and dragging the mouse\n");
 	printf("\t*-------------------------------------------------------*\n");
 	printf("\t|   'v': Toggle density/(v)elocity display              |\n");
+	printf("\t|   'o': V(o)rticity toggle                             |\n");
 	printf("\t|   'c': (C)lear the simulation                         |\n");
 	printf("\t|   'g': Draw (g)ridlines                               |\n");
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
@@ -588,12 +594,12 @@ int main(int argc, char** argv)
 
 
 	Shape shape2 = Shape();
-	shape2.points.push_back(Vec2(0.25, 0.35));
-	shape2.points.push_back(Vec2(0.35, 0.35));
-	shape2.points.push_back(Vec2(0.35,  0.3));
-	shape2.points.push_back(Vec2( 0.3, 0.25));
-	shape2.points.push_back(Vec2(0.25, 0.25));
-	shape2.centroid = Vec2(0.275, 0.325);
+	shape2.points.push_back(Vec2(0.05, 0.05) + Vec2(0.25, 0.35));
+	shape2.points.push_back(Vec2(0.05, 0.05) + Vec2(0.35, 0.35));
+	shape2.points.push_back(Vec2(0.05, 0.05) + Vec2(0.35,  0.3));
+	shape2.points.push_back(Vec2(0.05, 0.05) + Vec2( 0.3, 0.25));
+	shape2.points.push_back(Vec2(0.05, 0.05) + Vec2(0.25, 0.25));
+	shape2.centroid = Vec2(0.02, 0.02) + Vec2(0.275, 0.325);
 	//TRIANGULATE 
 	shape2.triangulation.push_back(0);
 	shape2.triangulation.push_back(1);
@@ -605,25 +611,41 @@ int main(int argc, char** argv)
 	shape2.triangulation.push_back(2);
 	shape2.triangulation.push_back(4);
 	shape2.post_ctor();
-	rb2 = new Rigidbody(shape2);
+	rbs.push_back(new Rigidbody(shape2));
+	
 
 	Shape shape3 = Shape();
-	shape3.points.push_back(Vec2(0.75, 0.55));
-	shape3.points.push_back(Vec2(0.85, 0.55));
-	shape3.points.push_back(Vec2(0.85, 0.45));
-	shape3.points.push_back(Vec2(0.75, 0.45));
-	shape3.centroid = Vec2(0.8, 0.5);
+	Vec2 offset = Vec2(0.7, 0.7);
+	shape3.points.push_back(offset+Vec2(0.045, 0.045));
+	shape3.points.push_back(offset+Vec2(0.045, 0.075));
+	shape3.points.push_back(offset+Vec2(0.055, 0.075));
+	shape3.points.push_back(offset+Vec2(0.055, 0.045));
+	shape3.centroid = offset+Vec2(0.05, 0.05);
 	shape3.triangulation = {0, 1, 2,  0, 2, 3};
 	shape3.post_ctor();
-	rb3 = new Rigidbody(shape3);
+	rbs.push_back(new Rigidbody(shape3));
 
+
+	Shape shape4 = Shape();
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.01, 0.01));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.03, 0));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.01, -0.01));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0, -0.03));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.01, -0.01));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.03, 0));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.01, 0.01));
+	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0, 0.03));
+	shape4.centroid = Vec2(0.05, 0.7);
+	shape4.post_ctor();
+	rbs.push_back(new Rigidbody(shape4));
 
 	rbc.addRB(rb);
-	rbc.addRB(rb2);
-	rbc.addRB(rb3);
-	rb->omega = 3.141592*0.25*dt;
-	rb2->omega = -3.141592*dt;
-	rb3->omega = 0.1*dt;
+	for (Rigidbody* rb : rbs) rbc.addRB(rb);
+	// rbc.addRB(rbs[1]);
+	rb->omega = 0.2*3.141592*0.2144451*dt;
+	rbs[0]->omega = 0.2*-3.141592*dt;
+	rbs[1]->omega = 1*dt;
+	rbs[2]->omega = 1.57152*dt;
 	//VERY IMPORTANT
 	rbc.init();
 

@@ -17,12 +17,16 @@ void RigidbodyCollection::step(float dt){
         rb->update_state(y);
         y += Rigidbody::STATE_SIZE;
     }
-    
+
     bool legal = ch.is_legal_position();
 }
 
 RigidbodyCollection::RigidbodyCollection(){
     rbs = std::vector<Rigidbody*>();
+}
+
+void RigidbodyCollection::apply_force_to_liquid(float* u, float* v, float dt){
+    for(Rigidbody* rb : rbs) rb->apply_force_to_liquid(u, v, dt);
 }
 
 // RigidbodyCollection::~RigidbodyCollection(){

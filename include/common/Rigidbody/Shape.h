@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <MatrixMath.h>
+#include "EdgeSet.h"
+#include <set>
 
 namespace DrawModes{
     enum DrawMode{LINES, TRIS, HIDE};
@@ -19,6 +21,7 @@ class Shape{
         
         std::vector<Vec2> rel_points;
         std::vector<Vec2> world_space_points;
+        std::vector<Vec2> world_space_velocity;
 
         std::vector<int> triangulation; // 3*n vector of triangle corners. Used for inertia calculation
 
@@ -29,6 +32,8 @@ class Shape{
         void draw(Mat2 &rotation, Vec2 &offset, DrawModes::DrawMode mode, float r, float g, float b);
 
         void post_ctor();
+
+        std::set<std::pair<Point, Vec2>> get_grid_cells();
 
         Shape(){}
 };

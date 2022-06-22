@@ -3,6 +3,8 @@ using namespace std;
 
 class Object {
 public:
+	bool enabled = false;
+
 	int cenX;
 	int cenY;
 	int size;

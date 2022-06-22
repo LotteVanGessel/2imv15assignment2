@@ -25,7 +25,7 @@ Contact::Contact(Rigidbody* rb1, Rigidbody* rb2) : rb1(rb1), rb2(rb2) {
 
     if (!FindSplitLine()){
         printf("ERROR: Rigidbody starting position not legal...\n Exiting...\n");
-        exit(-1);
+        //exit(-1);
     }
     cycle();
 }
@@ -138,11 +138,12 @@ void CollisionHelper::draw(){
     glBegin(GL_LINES);
     glColor3f(1.0, 0, 0);
     for (Contact &c : contacts){
+        glLineWidth(3.0);
         glColor3f(1.0, 0, 0);
         //printf("%.3f, %.3f\n", (*c.l1.p)[0] + 1*c.l1.dir[0], (*c.l1.p)[1] + 1*c.l1.dir[1]);
-        glVertex2f((*c.l0.p)[0] + 30*c.l0.dir[0], (*c.l0.p)[1] + 30*c.l0.dir[1]);
-        glVertex2f((*c.l0.p)[0] - 20*c.l0.dir[0], (*c.l0.p)[1] - 20*c.l0.dir[1]);
-
+        glVertex2f((*c.l0.p)[0] + 300*c.l0.dir[0], (*c.l0.p)[1] + 300*c.l0.dir[1]);
+        glVertex2f((*c.l0.p)[0] - 200*c.l0.dir[0], (*c.l0.p)[1] - 200*c.l0.dir[1]);
+        glLineWidth(1.5);
         glColor3f(0, 0, 1.0);
         glVertex2f((*c.l0.p)[0], (*c.l0.p)[1]);
         glVertex2f((*c.l0.p)[0] + 0.1*c.l0.normal[0], (*c.l0.p)[1] + 0.1*c.l0.normal[1]);

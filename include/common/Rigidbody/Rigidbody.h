@@ -15,7 +15,7 @@ class Rigidbody{
     
     // Constants
     // TODO: Deze dingen doen
-    float mass;
+    float mass = 1;
     float Ibody;
     float Ibodyinv;    
 
@@ -42,7 +42,7 @@ class Rigidbody{
     void dxdt(float* y, float dt);
     void update_state(float* new_state);
     void draw(DrawModes::DrawMode mode);
-
+    void apply_force_to_liquid(float* u, float * v, float dt);
     void print();
 };
 #endif

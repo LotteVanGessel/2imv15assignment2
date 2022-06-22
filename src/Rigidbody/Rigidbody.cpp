@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <cstdio>
 
+#define N 64
+#define IX(i,j) ((i)+(N+2)*(j))
+
 
 Rigidbody::Rigidbody(Shape shape) : shape(shape){
     state = (float*) malloc(STATE_SIZE*sizeof(float));
@@ -31,6 +34,20 @@ Rigidbody::Rigidbody(Shape shape) : shape(shape){
     tau = Vec2();
     omega_mat = RotMat2();
     Rdot = Mat2();
+}
+
+void Rigidbody::apply_force_to_liquid(float* u, float * v, float dt){
+    std::set<std::pair<Point, Vec2>> grid_cells = shape.get_grid_cells();
+    float constant = 1e-2f;
+    // printf("================================\n");
+    for (const std::pair<Point, Vec2> & pair : grid_cells){
+        // printf("p: %i %i\n", pair.first.x, pair.first.y);
+        // printf("v: %.8f %.8f\n", pair.second[0], pair.second[1]);
+        // printf("c: %.3f %.3f\n", constant * mass * pair.second[0] / dt, constant * mass * pair.second[1] / dt);
+        if (pair.first.x < 0 || pair.first.y < 0 || pair.first.x > N+1 || pair.first.y > N+1) continue;
+        u[IX(pair.first.x, pair.first.y)] += constant * mass * pair.second[0] / dt; 
+        v[IX(pair.first.x, pair.first.y)] += constant * mass * pair.second[1] / dt;
+    }
 }
 
 void Rigidbody::dxdt(float* y, float dt){

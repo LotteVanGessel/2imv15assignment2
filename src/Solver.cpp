@@ -21,7 +21,6 @@ std::set<Edge> edges;
 
 
 
-
 void add_source(int N, float* x, float* s, float dt)
 {
 	int i, size = (N + 2) * (N + 2);
@@ -164,7 +163,7 @@ void vorticity(int N, float* u, float* v, float * vor)
 
 }
 
-void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor)
+void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, int dovorticity)
 {
 	add_source(N, u, u0, dt); add_source(N, v, v0, dt);
 	SWAP(u0, u); diffuse(N, 1, u, u0, visc, dt);
@@ -173,8 +172,7 @@ void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float
 	SWAP(u0, u); SWAP(v0, v);
 	advect(N, 1, u, u0, u0, v0, dt); advect(N, 2, v, v0, u0, v0, dt);
 	project(N, u, v, u0, v0);
-	vorticity(N, u, v, vor);
-	
+	if (dovorticity) vorticity(N, u, v, vor);
 }
 
 

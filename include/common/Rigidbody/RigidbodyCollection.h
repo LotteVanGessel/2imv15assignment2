@@ -29,6 +29,8 @@ class RigidbodyCollection{
 
         void addRB(Rigidbody* rb);
 
+        void apply_force_to_liquid(float* u, float* v, float dt);
+
         inline void resize_all(int old_size, int new_size);
 
         void draw(DrawModes::DrawMode mode);

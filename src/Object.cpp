@@ -18,7 +18,7 @@ void Object::reset() {
 }
 
 void Object::draw(float h) {
-
+	if (!enabled) return;
 	float x0 = (cenX - size - 1) * h;
 	float x1 = (cenX + size) * h;
 	float y0 = (cenY - size - 1) * h;
@@ -40,7 +40,8 @@ void Object::draw(float h) {
 }
 
 void Object::setCenter(int cX, int cY, int N)
-{
+{	
+	if (!enabled) return;
 	if (std::abs(cX - cenX) > 1)
 	{
 		int increment = (cX - cenX) / std::abs(cX - cenX);
@@ -83,6 +84,7 @@ void Object::setCenter(int cX, int cY, int N)
 //works for object
 void Object::setBound(int N, int b, float* mat)
 {
+	if (!enabled) return;
 	int i;
 	int x = cenX;
 	int y = cenY;
@@ -137,6 +139,7 @@ void force_func(float* dens, float* vel, int outside, int inside, int sign_x, fl
 
 void Object::force(float* u, float* v, float* dens, int N, float dt)
 {
+	if (!enabled) return;
 	int sign_x = velx > 0 ? 1 : -1;
 	sign_x = velx == 0 ? 0 : sign_x;
 	int sign_y = vely > 0 ? 1 : -1;
