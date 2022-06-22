@@ -32,6 +32,7 @@ struct Vec2 : Data{
     Vec2();
     Vec2(float* x);
     Vec2(float x, float y);
+    void normalise();
     void print();
 };
 
@@ -51,10 +52,21 @@ Vec2 operator+(const Vec2 &u, const Vec2 &v);
 
 Vec2 operator-(const Vec2 &u, const Vec2 &v);
 
+float dot(const float* u, const float* v, int n);
+
+float dot(const Vec2 & u, const Vec2 & v);
+
+void vecassign(float* dst, const float* src, int n);
+
+void vecassign(Data &dst, const Data &src);
 
 void vecadd(const float* u, const float* v, float* result, int n);
 
 void vecadd(const Data &u, const Data &v, Data &result);
+
+void vecsub(const float* u, const float* v, float* result, int n);
+
+void vecsub(const Data &u, const Data &v, Data &result);
 
 void scalarmult(const float scalar, const Data &x, Data &result);
 

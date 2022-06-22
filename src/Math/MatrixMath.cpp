@@ -130,6 +130,19 @@ Vec2 operator-(const Vec2 &u, const Vec2 &v){
     return Vec2(u[0]-v[0], u[1]-v[1]);
 }
 
+void Vec2::normalise(){
+    float invmag = 1/sqrt(data[0]*data[0]+data[1]*data[1]);
+    data[0] *= invmag;
+    data[1] *= invmag;
+}
+
+void vecassign(float* dst, const float* src, int n){
+    std::memcpy(dst, src, n*sizeof(float));
+}
+
+void vecassign(Data &dst, const Data &src){
+    vecassign(dst.data, src.data, dst.n);
+}
 
 void vecadd(const float* u, const float* v, float* result, int n){
     int i; for(i = 0; i < n; ++i) result[i] = u[i] + v[i];
@@ -137,6 +150,14 @@ void vecadd(const float* u, const float* v, float* result, int n){
 
 void vecadd(const Data &u, const Data &v, Data &result){
     vecadd(u.data, v.data, result.data, u.n);
+}
+
+void vecsub(const float* u, const float* v, float* result, int n){
+    int i; for(i = 0; i < n; ++i) result[i] = u[i] - v[i];
+}
+
+void vecsub(const Data &u, const Data &v, Data &result){
+    vecsub(u.data, v.data, result.data, u.n);
 }
 
 void scalarmult(const float scalar, const Data &x, Data &result){
@@ -156,4 +177,14 @@ void scalarmult(const float scalar, const float* x, float* r, int n){
 
 void scalarmult(const float scalar, float* x, int n){
     int i; for (i = 0; i < n; i++) x[i]*=scalar;
+}
+
+float dot(const float* u, const float* v, int n){
+    float sum = 0;
+    for (int i = 0; i < n; i++) sum += u[i] * v[i];
+    return sum;
+}
+
+float dot(const Vec2 & u, const Vec2 & v){
+    return dot(u.data, v.data, u.n);
 }

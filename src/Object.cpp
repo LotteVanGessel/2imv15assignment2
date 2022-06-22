@@ -143,7 +143,7 @@ void Object::force(float* u, float* v, float* dens, int N, float dt)
 	sign_y = vely == 0 ? 0 : sign_y;
 
 	if (sign_x == 0 && sign_y == 0) return;
-	float mv = mass/(N*size*dt);
+	float mv = mass/(N*(2*size+1)*dt);
 	if (sign_x != 0){
 		int ahead = cenX + (size+1)*sign_x;
 		int behind = cenX - (size+1)*sign_x; 

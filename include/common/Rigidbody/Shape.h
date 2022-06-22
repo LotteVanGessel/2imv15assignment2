@@ -18,12 +18,14 @@ class Shape{
         Vec2 temp;
         
         std::vector<Vec2> rel_points;
+        std::vector<Vec2> world_space_points;
 
         std::vector<int> triangulation; // 3*n vector of triangle corners. Used for inertia calculation
 
         void calc_rel_points();
         virtual void triangulate(){};
         virtual void calculate_centroid(){};
+        void update_world_space(Mat2 &rotation, Vec2 &offset);
         void draw(Mat2 &rotation, Vec2 &offset, DrawModes::DrawMode mode, float r, float g, float b);
 
         void post_ctor();

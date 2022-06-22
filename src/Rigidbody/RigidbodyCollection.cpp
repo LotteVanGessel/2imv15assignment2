@@ -17,6 +17,8 @@ void RigidbodyCollection::step(float dt){
         rb->update_state(y);
         y += Rigidbody::STATE_SIZE;
     }
+    
+    bool legal = ch.is_legal_position();
 }
 
 RigidbodyCollection::RigidbodyCollection(){
@@ -37,6 +39,8 @@ void RigidbodyCollection::init(){
     temp = (float*) malloc(n* sizeof(float));
     Dxdt = (float*) malloc(n* sizeof(float));
     copy_states(x1);
+    for (Rigidbody* rb : rbs) rb->update_state(rb->state); // force update
+    ch = CollisionHelper(rbs);
 }
 
 void RigidbodyCollection::copy_states(float* dst, int l, int r){
@@ -78,6 +82,7 @@ void RigidbodyCollection::addRB(Rigidbody* rb){
 
 void RigidbodyCollection::draw(DrawModes::DrawMode mode){
     for (Rigidbody* rb : rbs) rb->draw(mode);
+    ch.draw();
 }
 
 void RigidbodyCollection::print(){

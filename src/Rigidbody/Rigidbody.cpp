@@ -60,7 +60,9 @@ void Rigidbody::dxdt(float* y, float dt){
 
 void Rigidbody::update_state(float* new_state){ 
     std::memcpy(state, new_state, STATE_SIZE*sizeof(float)); 
+    shape.update_world_space(R, x);
 }
+
 void Rigidbody::draw(DrawModes::DrawMode mode){ 
     shape.draw(R, x, mode, 0.0f, 1.0f, 1.0f); 
 }

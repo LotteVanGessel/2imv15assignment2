@@ -25,6 +25,7 @@
 #include "RigidbodyCollection.h"
 #include "Shape.h"
 #include <cstring>
+#include <set>
 
 /* macros */
 
@@ -41,10 +42,11 @@ extern std::vector<std::vector<Vec2>> edges;
 
 Object* mObj = new Object(20, 20, 6);
 int targetx = 20, targety = 20;
-Vec2 bot_left_rectangle = Vec2(0.25, 0.25);
-Vec2 top_right_rectangle = Vec2(0.75, 0.75);
+Vec2 bot_left_rectangle = Vec2(0.4, 0.4);
+Vec2 top_right_rectangle = Vec2(0.6, 0.6);
 Rigidbody* rb = new Rigidbody(Rect(bot_left_rectangle, top_right_rectangle));
 Rigidbody* rb2;
+Rigidbody* rb3;
 RigidbodyCollection rbc = RigidbodyCollection();
 static int N;
 static float dt, diff, visc;
@@ -458,7 +460,7 @@ static void display_func(void)
 	else		draw_density();
 
 	
-	mObj->draw(1.0 / N);
+	// mObj->draw(1.0 / N);
 	draw_edges();
 	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
 	
@@ -560,7 +562,7 @@ int main(int argc, char** argv)
 	printf("\t|   'c': (C)lear the simulation                         |\n");
 	printf("\t|   'g': Draw (g)ridlines                               |\n");
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
-	printf("\t|   'e': Toggle (e)dge drawin                           |\n");
+	printf("\t|   'e': Toggle (e)dge drawing                          |\n");
 	printf("\t|   'r': Cycle (r)igidbody drawing mode                 |\n");
 	printf("\t|   'p': (P)ause                                        |\n");
 	printf("\t|   '>': Step forward once (can be done while paused)   |\n");
@@ -580,11 +582,11 @@ int main(int argc, char** argv)
 
 
 	Shape shape2 = Shape();
-	shape2.points.push_back(Vec2(0.25, 0.25));
-	shape2.points.push_back(Vec2( 0.3, 0.25));
-	shape2.points.push_back(Vec2( 0.3,  0.3));
-	shape2.points.push_back(Vec2(0.35, 0.35));
 	shape2.points.push_back(Vec2(0.25, 0.35));
+	shape2.points.push_back(Vec2(0.35, 0.35));
+	shape2.points.push_back(Vec2(0.35,  0.3));
+	shape2.points.push_back(Vec2( 0.3, 0.25));
+	shape2.points.push_back(Vec2(0.25, 0.25));
 	shape2.centroid = Vec2(0.275, 0.325);
 	//TRIANGULATE 
 	shape2.triangulation.push_back(0);
@@ -599,11 +601,23 @@ int main(int argc, char** argv)
 	shape2.post_ctor();
 	rb2 = new Rigidbody(shape2);
 
+	Shape shape3 = Shape();
+	shape3.points.push_back(Vec2(0.75, 0.55));
+	shape3.points.push_back(Vec2(0.85, 0.55));
+	shape3.points.push_back(Vec2(0.85, 0.45));
+	shape3.points.push_back(Vec2(0.75, 0.45));
+	shape3.centroid = Vec2(0.8, 0.5);
+	shape3.triangulation = {0, 1, 2,  0, 2, 3};
+	shape3.post_ctor();
+	rb3 = new Rigidbody(shape3);
+
+
 	rbc.addRB(rb);
 	rbc.addRB(rb2);
+	rbc.addRB(rb3);
 	rb->omega = 3.141592*0.25*dt;
 	rb2->omega = -3.141592*dt;
-	
+	rb3->omega = 0.1*dt;
 	//VERY IMPORTANT
 	rbc.init();
 

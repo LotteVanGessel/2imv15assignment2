@@ -2,7 +2,9 @@
 #define RIGIDBODYCOLLECTION_H
 #include <vector>
 #include "Rigidbody.h"
+#include "Collisiondetection.h"
 class RigidbodyCollection{
+    CollisionHelper ch;
     std::vector<Rigidbody*> rbs;
     float* x0;
     float* x1;
