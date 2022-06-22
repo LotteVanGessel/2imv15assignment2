@@ -157,22 +157,6 @@ static void draw_edges(void)
 		int diffy = edge[0].data[1];
 		int x = edge[1].data[0];
 		int y = edge[1].data[1];
-		if (diffx != 0)
-		{
-			diffx = diffx / fabs(diffx);
-		}
-		if (diffy != 0)
-		{
-			diffy = diffy / fabs(diffy);
-		} 
-		if (diffx > diffy)
-		{
-			diffy = 0;
-		}
-		else
-		{
-			diffx = 0;
-		}
 		glVertex2f(x * h, y * h);
 		glVertex2f((x + diffx) * h, (y + diffy) * h);
 	}
@@ -318,12 +302,30 @@ static void get_from_UI(float* d, float* u, float* v)
 		{
 			int diffx = (mx - omx);
 			int  diffy = (omy - my);
+			if (diffx != 0)
+			{
+				diffx = diffx / fabs(diffx);
+			}
+			if (diffy != 0)
+			{
+				diffy = diffy / fabs(diffy);
+			}
+			if (diffx > diffy)
+			{
+				diffy = 0;
+			}
+			else
+			{
+				diffx = 0;
+			}
 			int x = (int)((mx / (float)win_x) * N + 1);
 			int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
  			Vec2 prev = Vec2(diffx, diffy);
 			Vec2 now = Vec2(x, y);
-			std::vector<Vec2> edge = { prev, now };
-			edges.push_back(edge);
+			std::vector<Vec2> edgenow = {prev, now};
+			edges.push_back(edgenow);
+			
+			
 		}
 		
 	}
