@@ -573,7 +573,7 @@ int main(int argc, char** argv)
 	}
 
 	if (argc == 1) {
-		N = 16;
+		N = 64;
 		dt = 0.01f;
 		diff = 0.01f*dt;
 		visc = 0.0f;
@@ -673,7 +673,7 @@ int main(int argc, char** argv)
 	rbc.addRB(rb);
 	for (Rigidbody* rb : rbs) rbc.addRB(rb);
 	// rbc.addRB(rbs[1]);
-	rb->omega = 0.2*3.141592*0.2144451*dt;
+	rb->omega = 2*3.141592*0.2144451*dt;
 	rbs[0]->omega = 0.2*-3.141592*dt;
 	rbs[1]->omega = 1*dt;
 	rbs[2]->omega = 1.57152*dt;
