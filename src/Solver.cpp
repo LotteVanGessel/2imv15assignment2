@@ -47,8 +47,8 @@ void set_edge(std::set<Edge> edges, int b, int N, float* x)
 		}
 		float dens1 = x[IX(x1, y)];
 		float dens2 = x[IX(x1 + diffy, y + diffx)];
-		x[IX(x1, y)] = dens2;
-		x[IX(x1 + diffy, y + diffx)] = dens1;
+		if (fabs(diffy) == 1) x[IX(x1, y)] = b == 1 ? -dens2 : dens2;
+		if (fabs(diffx) == 1) x[IX(x1, y)] = b == 2 ? -dens1 : dens1;
 	}
 
 
@@ -160,7 +160,7 @@ void vorticity(int N, float* u, float* v, float * vor)
 		u[IX(i, j)] += dwdy * vor[IX(i, j)] * 1.0 / N * 0.5;
 		v[IX(i, j)] -= dwdx * vor[IX(i, j)] * 1.0 / N * 0.5;
 	END_FOR
-
+		//set_bnd(N, 0, vor);  ; mObj->setBound(N, 0, vor); set_edge(edges, 0, N, vor); 
 }
 
 void vel_step(int N, float* u, float* v, float* u0, float* v0, float visc, float dt, float* vor, int dovorticity)

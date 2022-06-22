@@ -325,6 +325,22 @@ static void get_from_UI(float* d, float* u, float* v)
 		{
 			int diffx = (mx - omx);
 			int  diffy = (omy - my);
+			if (diffx != 0)
+			{
+				diffx = diffx / fabs(diffx);
+			}
+			if (diffy != 0)
+			{
+				diffy = diffy / fabs(diffy);
+			}
+			if (diffx > diffy)
+			{
+				diffy = 0;
+			}
+			else
+			{
+				diffx = 0;
+			}
 			int x = (int)((mx / (float)win_x) * N + 1);
 			int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
  			Point prev = Point(diffx, diffy);
