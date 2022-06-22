@@ -3,9 +3,9 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <GL/glut.h>
 
-#define N 64
-#define IX(i,j) ((i)+(N+2)*(j))
+static inline int IX(int i, int j, int N){ return i+(N+2)*j; };
 
 
 Rigidbody::Rigidbody(Shape shape) : shape(shape){
@@ -36,17 +36,19 @@ Rigidbody::Rigidbody(Shape shape) : shape(shape){
     Rdot = Mat2();
 }
 
-void Rigidbody::apply_force_to_liquid(float* u, float * v, float dt){
-    std::set<std::pair<Point, Vec2>> grid_cells = shape.get_grid_cells();
-    float constant = 1e-2f;
+void Rigidbody::apply_force_to_liquid(float* u, float * v, float dt, int N){
+    std::set<std::pair<Point, Vec2>> grid_cells = shape.get_grid_cells(N);
+    float constant = 5e-1f * mass / (dt * grid_cells.size());
+
     // printf("================================\n");
     for (const std::pair<Point, Vec2> & pair : grid_cells){
         // printf("p: %i %i\n", pair.first.x, pair.first.y);
         // printf("v: %.8f %.8f\n", pair.second[0], pair.second[1]);
         // printf("c: %.3f %.3f\n", constant * mass * pair.second[0] / dt, constant * mass * pair.second[1] / dt);
         if (pair.first.x < 0 || pair.first.y < 0 || pair.first.x > N+1 || pair.first.y > N+1) continue;
-        u[IX(pair.first.x, pair.first.y)] += constant * mass * pair.second[0] / dt; 
-        v[IX(pair.first.x, pair.first.y)] += constant * mass * pair.second[1] / dt;
+        u[IX(pair.first.x, pair.first.y, N)] += constant * pair.second[0]; 
+        v[IX(pair.first.x, pair.first.y, N)] += constant * pair.second[1];
+        free(pair.second.data);
     }
 }
 
@@ -80,8 +82,32 @@ void Rigidbody::update_state(float* new_state){
     shape.update_world_space(R, x);
 }
 
-void Rigidbody::draw(DrawModes::DrawMode mode){ 
+void Rigidbody::draw(DrawModes::DrawMode mode, bool draw_grid_cells, int N){ 
     shape.draw(R, x, mode, 0.0f, 1.0f, 1.0f); 
+    if (draw_grid_cells){
+        float h = 1.0/N;
+        float hh = 0.5f*hh;
+        auto grid_cells = shape.get_grid_cells(N);
+        glBegin(GL_QUADS);
+        glColor3f(0.5, 0.0, 1.0);
+        for (auto p : grid_cells){
+            glVertex2f(p.first.x*h-h, p.first.y*h-h);
+            glVertex2f(p.first.x*h-h, p.first.y*h);
+            glVertex2f(p.first.x*h, p.first.y*h);
+            glVertex2f(p.first.x*h, p.first.y*h-h);
+        }
+        glEnd();
+
+        glLineWidth(0.1f);
+        glBegin(GL_LINES);
+        glColor3f(1.0, 0, 0.5);
+        for (auto p : grid_cells){
+            glVertex2f(p.first.x*h-hh, p.first.y*h-hh);
+            glVertex2f(p.first.x*h-hh+ (5e-1f * 1 / 0.01)*p.second[0], p.first.y*h-hh+(5e-1f * 1 / 0.01)*p.second[1]);
+            
+        }
+        glEnd();
+    }
 }
 
 void Rigidbody::print(){

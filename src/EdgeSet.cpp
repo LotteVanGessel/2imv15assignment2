@@ -19,5 +19,5 @@ bool operator<(const Edge & e1, const Edge & e2){
 }
 
 bool operator<(const std::pair<Point, Vec2> & p1, const std::pair<Point, Vec2> & p2){
-    return p1.first < p2.first || (p1.first == p2.first && (p1.second[0] < p2.second[0] || (p1.second[0] == p2.second[0] && p1.second[1] < p2.second[1])));
+    return p1.first < p2.first;
 }

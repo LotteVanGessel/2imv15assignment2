@@ -24,7 +24,7 @@ void Object::draw(float h) {
 	float y0 = (cenY - size - 1) * h;
 	float y1 = (cenY + size) * h;
 
-	int mode = 1;
+	int mode = 0;
 	glBegin(mode == 0 ? GL_LINE_LOOP : GL_QUADS);
 	glLineWidth(4.0f);
 	//Pink?
@@ -98,7 +98,7 @@ void Object::setBound(int N, int b, float* mat)
 	}
 	for (i = y - a + 1; i < y + a; i++) {
 		if (x-a > 1) mat[IX(x - a, i)] = b == 1 ? -mat[IX(x - a - 1, i)] : mat[IX(x - a - 1, i)];
-		if (y+a < N) mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
+		if (x+a < N) mat[IX(x + a, i)] = b == 1 ? -mat[IX(x + a + 1, i)] : mat[IX(x + a + 1, i)];
 	}
 	int j, k;
 	
@@ -117,9 +117,9 @@ void Object::setBound(int N, int b, float* mat)
 		if(y+a < N) mat[IX(x+a, y+a)] = 0.5f * (mat[IX(x + a + 1, y + a)] + mat[IX(x+a, y+a+1)]);
 	}
 
-	for (j = x - a + (x-a == 1 ? 0 : 1); j <= x + a - (x+a == N ? 0 : 1); j++)
+	for (j = x - a + (x-a <= 1 ? 0 : 1); j <= x + a - (x+a >= N ? 0 : 1); j++)
 	{
-		for (k = y - a + (y-a == 1 ? 0 : 1); k <= y + a - (y+a == N ? 0 : 1); k++)
+		for (k = y - a + (y-a <= 1 ? 0 : 1); k <= y + a - (y+a >= N ? 0 : 1); k++)
 		{
 			mat[IX(j, k)] = 0;
 		}
@@ -207,7 +207,6 @@ void Object::force(float* u, float* v, float* dens, int N, float dt)
 		force_func(dens, u, outside, inside,  1, mv, 0.5f);
 	}
 }
-
 
 void Object::velocity(int vx, int vy)
 {

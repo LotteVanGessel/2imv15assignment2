@@ -31,27 +31,15 @@ void set_edge(std::set<Edge> edges, int b, int N, float* x)
 {
 	for (auto edge : edges)
 	{
-		int diffx = edge.a.x;
-		int diffy = edge.a.y;
+		int x2 = edge.a.x;
+		int y2 = edge.a.y;
 		int x1 = edge.b.x;
-		int y = edge.b.y;
-		diffx = diffx / fabs(diffx);
-		diffx = diffy / fabs(diffy);
-		if (diffx > diffy)
-		{
-			diffy = 0;
-		}
-		else
-		{
-			diffx = 0;
-		}
-		float dens1 = x[IX(x1, y)];
-		float dens2 = x[IX(x1 + diffy, y + diffx)];
-		if (fabs(diffy) == 1) x[IX(x1, y)] = b == 1 ? -dens2 : dens2;
-		if (fabs(diffx) == 1) x[IX(x1, y)] = b == 2 ? -dens1 : dens1;
+		int y1 = edge.b.y;
+		float dens1 = x[IX(x1, y1)];
+		float dens2 = x[IX(x2, y2)];
+		if (y2-y1 != 0) x[IX(x1, y1)] = b == 1 ? -dens2 : dens2;
+		if (x2-x1 != 0) x[IX(x1, y1)] = b == 2 ? -dens1 : dens1;
 	}
-
-
 }
 
 void set_bnd(int N, int b, float* x)

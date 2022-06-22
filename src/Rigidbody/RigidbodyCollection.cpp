@@ -25,8 +25,8 @@ RigidbodyCollection::RigidbodyCollection(){
     rbs = std::vector<Rigidbody*>();
 }
 
-void RigidbodyCollection::apply_force_to_liquid(float* u, float* v, float dt){
-    for(Rigidbody* rb : rbs) rb->apply_force_to_liquid(u, v, dt);
+void RigidbodyCollection::apply_force_to_liquid(float* u, float* v, float dt, int N){
+    for(Rigidbody* rb : rbs) rb->apply_force_to_liquid(u, v, dt, N);
 }
 
 // RigidbodyCollection::~RigidbodyCollection(){
@@ -84,9 +84,9 @@ void RigidbodyCollection::addRB(Rigidbody* rb){
     }
 }
 
-void RigidbodyCollection::draw(DrawModes::DrawMode mode){
-    for (Rigidbody* rb : rbs) rb->draw(mode);
-    ch.draw();
+void RigidbodyCollection::draw(DrawModes::DrawMode mode, bool draw_gridcells, int N){
+    for (Rigidbody* rb : rbs) rb->draw(mode, draw_gridcells, N);
+    // ch.draw();
 }
 
 void RigidbodyCollection::print(){

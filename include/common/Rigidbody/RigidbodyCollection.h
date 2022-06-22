@@ -29,11 +29,11 @@ class RigidbodyCollection{
 
         void addRB(Rigidbody* rb);
 
-        void apply_force_to_liquid(float* u, float* v, float dt);
+        void apply_force_to_liquid(float* u, float* v, float dt, int N);
 
         inline void resize_all(int old_size, int new_size);
 
-        void draw(DrawModes::DrawMode mode);
+        void draw(DrawModes::DrawMode mode, bool draw_gridcells, int N);
 
         void print();
 };

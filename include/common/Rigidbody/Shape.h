@@ -33,7 +33,7 @@ class Shape{
 
         void post_ctor();
 
-        std::set<std::pair<Point, Vec2>> get_grid_cells();
+        std::set<std::pair<Point, Vec2>> get_grid_cells(int N);
 
         Shape(){}
 };

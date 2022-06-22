@@ -1,6 +1,7 @@
 #include "Shape.h"
 #include <GL/glut.h>
 #include <cstdio>
+#include <cmath>
 void Shape::calc_rel_points(){
     rel_points = std::vector<Vec2>(points.size());
     int i;
@@ -72,55 +73,117 @@ void Shape::draw(Mat2 &rotation, Vec2 &offset, DrawModes::DrawMode mode, float r
 	
 }
 
+void lowline(std::set<std::pair<Point, Vec2>> &grid_cells, Point &start, Point &end, Vec2& va, Vec2& interpv, Vec2& temp){
+    int x = start.x;
+    int y = start.y;
 
-std::set<std::pair<Point, Vec2>> Shape::get_grid_cells(){
+    int dx = end.x - start.x;
+    int dy = end.y - start.y;
+    
+
+    int yinc = dy < 0 ? -1 : 1;
+    dy *= yinc;
+    int D = 2*dy-dx;
+
+    float invlength = 1/sqrt(dx*dx + dy*dy);
+    for (; x != end.x; x += 1){
+        // interpolate between va and vb
+        float t = sqrt((x-start.x)*(x-start.x)+(y-start.y)*(y-start.y))*invlength;
+        scalarmult(t, interpv, temp);
+        grid_cells.insert(std::make_pair(Point(x, y), Vec2(va[0]+temp[0], va[1]+temp[1])));
+        if (D > 0){
+            y += yinc;
+            D += 2 * (dy-dx);
+        }else{
+            D += 2*dy;
+        }
+    }
+}
+
+void highline(std::set<std::pair<Point, Vec2>> &grid_cells, Point &start, Point &end, Vec2& va, Vec2& interpv, Vec2& temp){
+    int x = start.x;
+    int y = start.y;
+
+    int dx = end.x - start.x;
+    int dy = end.y - start.y;
+    
+
+    int xinc = dx < 0 ? -1 : 1;
+    dx *= xinc;
+    int D = 2*dx-dy;
+
+    float invlength = 1/sqrt(dx*dx + dy*dy);
+    for (; y != end.y; y += 1){
+        // interpolate between va and vb
+        float t = sqrt((x-start.x)*(x-start.x)+(y-start.y)*(y-start.y))*invlength;
+        scalarmult(t, interpv, temp);
+        grid_cells.insert(std::make_pair(Point(x, y), Vec2(va[0]+temp[0], va[1]+temp[1])));
+        if (D > 0){
+            x += xinc;
+            D += 2 * (dx-dy);
+        }else{
+            D += 2*dx;
+        }
+    }
+}
+
+
+
+std::set<std::pair<Point, Vec2>> Shape::get_grid_cells(int N){
     std::set<std::pair<Point, Vec2>> grid_cells;
-    int N = 64;
     float h = 1.0/N;
     float hh = 0.5*h;
     int n = world_space_points.size();
+    Vec2 interpv = Vec2(0, 0);
     for (int i = 0; i < n; i++){
         Vec2& a = world_space_points[i];
         Vec2& b = world_space_points[(i+1)%n];
+        Vec2& va = world_space_velocity[i];
+        Vec2& vb = world_space_velocity[(i+1)%n];
         vecsub(b, a, temp);
-        
+        vecsub(vb, va, interpv);
         Point start((int)(a[0]*N)+1, (int)(a[1]*N)+1);
         Point end((int)(b[0]*N)+1, (int)(b[1]*N)+1);
 
-        int dirx = end.x-start.x > 0 ? 1 : -1;
-        int diry = end.y-start.y > 0 ? 1 : -1;
-        if (end.x-start.x == 0 || end.y-start.y == 0) return grid_cells;
-        float dydx = temp[1]/temp[0];
-        float y = a[1];
-        float dx = h;
-        float div = 1.0/(end.x-start.x);
-        Vec2& va = world_space_velocity[i];
-        Vec2& vb = world_space_velocity[i];
-        Vec2 interpa = Vec2(0, 0);
-        Vec2 interpb = Vec2(0, 0);
-        for (int x = start.x; x != end.x && dirx != 0 && std::abs(div) > 0.00001; x += dirx){
-            scalarmult(div*(x-start.x)*dirx, va, interpa);
-            scalarmult(1-div*(x-start.x)*dirx, vb, interpb);
-            // calculate y
-            grid_cells.insert(std::make_pair(Point(x, (int)(y*N)), 
-                                             Vec2(interpa[0] + interpb[0], interpa[1] + interpb[1])));
-            y += dydx * dx;
-        }
+        int dx = end.x - start.x;
+        int dy = end.y - start.y;
+        int xinc = dx < 0 ? -1 : 1;
+        int yinc = dy < 0 ? -1 : 1;
 
-        vecsub(b, a, temp);
-        float dxdy = temp[0]/temp[1];
-        float x = a[0];
-        float dy = h;
-        div = 1.0/(end.y-start.y);
-        vecsub(vb, va, temp);
-        for (int y = start.y; y != end.y && diry != 0 && std::abs(div) > 0.00001; y += diry){
-            scalarmult(div*(y-start.y)*diry, va, interpa);
-            scalarmult(1-div*(y-start.y)*diry, vb, interpb);
-            grid_cells.insert(std::make_pair(Point((int)(x*N),y),
-                                             Vec2(interpa[0] + interpb[0], interpa[1] + interpb[1])));
-            x += dxdy * dy;
+        if (dx == 0){
+            float invlength = 1/sqrt(dx*dx + dy*dy);
+            int x = start.x;
+            for (int y = start.y; y != end.y; y+=yinc){
+                float t = sqrt((x-start.x)*(x-start.x)+(y-start.y)*(y-start.y))*invlength;
+                scalarmult(t, interpv, temp);
+                grid_cells.insert(std::make_pair(Point(x, y), Vec2(va[0]+temp[0], va[1]+temp[1])));
+            }
+        }else if (dy == 0){
+            float invlength = 1/sqrt(dx*dx + dy*dy);
+            int y = start.y;
+            for (int x = start.x; x != end.x; x+=xinc){
+                float t = sqrt((x-start.x)*(x-start.x)+(y-start.y)*(y-start.y))*invlength;
+                scalarmult(t, interpv, temp);
+                grid_cells.insert(std::make_pair(Point(x, y), Vec2(va[0]+temp[0], va[1]+temp[1])));
+            }
+        }else if (dx * xinc > dy*yinc){
+            if (start.x > end.x){
+                scalarmult(-1, interpv, interpv);
+                lowline(grid_cells, end, start, vb, interpv, temp);
+            }else{
+                lowline(grid_cells, start, end, va, interpv, temp);
+            }
+        }else{
+            if (start.y > end.y){
+                scalarmult(-1, interpv, interpv);
+                highline(grid_cells, end, start, vb, interpv, temp);
+            }else{
+                highline(grid_cells, start, end, va, interpv, temp);
+            }
         }
     }
+    
+    free(interpv.data);
     return grid_cells;
 }
 

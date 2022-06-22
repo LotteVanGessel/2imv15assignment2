@@ -37,12 +37,11 @@ class Rigidbody{
     // Computed quantities
     Vec2 F;   // Force(t)
     Vec2 tau; // Tau(t) -> torque
-
     Rigidbody(Shape shape);
     void dxdt(float* y, float dt);
     void update_state(float* new_state);
-    void draw(DrawModes::DrawMode mode);
-    void apply_force_to_liquid(float* u, float * v, float dt);
+    void draw(DrawModes::DrawMode mode, bool draw_grid_cells, int N);
+    void apply_force_to_liquid(float* u, float * v, float dt, int N);
     void print();
 };
 #endif

@@ -58,10 +58,12 @@ static float force, source;
 static int dvel;
 static int dgrid; // draw grid
 static int dosim = !0;
-static int dovorticity = 0;
+static int dovorticity = !0;
+static int draw_gridcells = 0;
 static int override_dosim = 0;
-static int draw_mode_rigidbodies = 0;
+static int draw_mode_rigidbodies = DrawModes::DrawMode::HIDE;
 static int mouse_mode = 0;
+static bool enable_fixed_object = false;
 
 
 static float* u, * v, * u_prev, * v_prev;
@@ -160,28 +162,26 @@ static void draw_edges(void)
 	glBegin(GL_LINES);
 	for (const Edge & edge : edges)
 	{
-		int diffx = edge.a.x;
-		int diffy = edge.a.y;
-		int x = edge.b.x;
-		int y = edge.b.y;
-		if (diffx != 0)
-		{
-			diffx = diffx / fabs(diffx);
+		int x2 = edge.a.x-1;
+		int y2 = edge.a.y-1;
+		int x1 = edge.b.x-1;
+		int y1 = edge.b.y-1;
+			
+		if (x1 != x2){
+			
+			x = h * max(x1, x2);
+			y = h * y1;
+			glVertex2f(x, y);
+			glVertex2f(x, y+h);
+	
+		}else{
+			
+			x = h * x1;
+			y = h * max(y1, y2);
+			glVertex2f(x, y);
+			glVertex2f(x+h, y);
+	
 		}
-		if (diffy != 0)
-		{
-			diffy = diffy / fabs(diffy);
-		} 
-		if (diffx > diffy)
-		{
-			diffy = 0;
-		}
-		else
-		{
-			diffx = 0;
-		}
-		glVertex2f(x * h, y * h);
-		glVertex2f((x + diffx) * h, (y + diffy) * h);
 	}
 	glEnd();
 
@@ -316,38 +316,34 @@ static void get_from_UI(float* d, float* u, float* v)
 				int prevy = j = (int)(((win_y - omy) / (float)win_y) * N + 1);
 				targetx = i;
 				targety = j;
-
+				if (targetx - mObj->size < 1) targetx = 1 + mObj->size;
+				if (targety - mObj->size < 1) targety = 1 + mObj->size;
+				if (targetx + mObj->size > N) targetx = N - mObj->size;
+				if (targety + mObj->size > N) targety = N - mObj->size;
 			}
 	}
 	else
 	{
 		if (mouse_down[1]) 
 		{
-			int diffx = (mx - omx);
-			int  diffy = (omy - my);
-			if (diffx != 0)
-			{
-				diffx = diffx / fabs(diffx);
+			float xd, yd;
+			float fractx = modf((mx / (float)win_x) * N + 1, &xd);
+			int x = (int)xd;
+			float fracty = modf(((win_y - my) / (float)win_y) * N + 1, &yd);
+			int y = (int)yd;
+			int diffx = 0;
+			int diffy = 0;
+			if (fabs(0.5 - fractx) > fabs(0.5 - fracty)){
+				diffx = fractx < 0.5 ? -1 : 1;
+			}else{
+				diffy = fracty < 0.5 ? -1 : 1;
 			}
-			if (diffy != 0)
-			{
-				diffy = diffy / fabs(diffy);
-			}
-			if (diffx > diffy)
-			{
-				diffy = 0;
-			}
-			else
-			{
-				diffx = 0;
-			}
-			int x = (int)((mx / (float)win_x) * N + 1);
-			int y = j = (int)(((win_y - my) / (float)win_y) * N + 1);
- 			Point prev = Point(diffx, diffy);
+			printf("xd: %.3f yd: %.3f fractx: %.3f fracty: %.3f diffx: %i diffy: %i\n", xd, yd, fractx, fracty, diffx, diffy);
+ 			Point prev = Point(x+diffx, y+diffy);
 			Point now = Point(x, y);
+			printf("prev: %i %i now: %i %i\n", prev.x, prev.y, now.x, now.y);
 			Edge edge = {prev, now};
 			edges.insert(edge);
-			printf("%i\n", edges.size());
 		}
 	}
 	
@@ -423,8 +419,22 @@ static void key_func(unsigned char key, int x, int y)
 	case 'o':
 	case 'O':
 		dovorticity = !dovorticity;
+		printf(" >>> Toggled vorticity %s\n", dovorticity ? "on" : "off");
+		break;
+
+	case 'b':
+	case 'B':
+		draw_gridcells = !draw_gridcells;
+		break;
+	
+	case 'f':
+	case 'F':
+		enable_fixed_object = !enable_fixed_object;
+		mObj->enabled = enable_fixed_object;
 		break;
 	}
+
+
 
 }
 
@@ -455,6 +465,7 @@ static void reshape_func(int width, int height)
 
 static void idle_func(void)
 {
+	pre_display();
 	get_from_UI(dens_prev, u_prev, v_prev);
 	if (override_dosim != 0 || dosim != 0){
 
@@ -465,8 +476,10 @@ static void idle_func(void)
 		dens_step(N, dens, dens_prev, u, v, diff, dt);
 		clear_UI_data(dens_prev, u_prev, v_prev);
 		// update rigidbodycollection
-		rbc.step(dt);
-		rbc.apply_force_to_liquid(u, v, dt);
+		if (draw_mode_rigidbodies != DrawModes::DrawMode::HIDE){
+			rbc.step(dt);
+			rbc.apply_force_to_liquid(u, v, dt, N);
+		}
 
 		// Count time
 		current_time += dt;
@@ -480,7 +493,6 @@ static void idle_func(void)
 static char *title_buff = (char *) malloc(sizeof(char) * 1024);
 static void display_func(void)
 {
-	pre_display();
 
 	if (dvel) draw_velocity();
 	else		draw_density();
@@ -489,7 +501,7 @@ static void display_func(void)
 	
 	mObj->draw(1.0 / N);
 	draw_edges();
-	rbc.draw(DrawModes::modes[draw_mode_rigidbodies]);
+	rbc.draw(DrawModes::modes[draw_mode_rigidbodies], draw_gridcells != 0, N);
 	
 	//update title
 	float dens_sum = 0;
@@ -563,12 +575,12 @@ int main(int argc, char** argv)
 	}
 
 	if (argc == 1) {
-		N = 64;
+		N = 16;
 		dt = 0.01f;
-		diff = 0.0f;
+		diff = 0.01f*dt;
 		visc = 0.0f;
 		force = 5.0f;
-		source = 1000.0f;
+		source = 100.0f;
 		fprintf(stderr, "Using defaults : N=%d dt=%g diff=%g visc=%g force = %g source=%g\n",
 			N, dt, diff, visc, force, source);
 	}
@@ -584,14 +596,18 @@ int main(int argc, char** argv)
 	printf("\n\nHow to use this demo:\n\n");
 	printf("\t Add densities with the right mouse button\n");
 	printf("\t Add velocities with the left mouse button and dragging the mouse\n");
+	printf("\t Place edges using middle mouse button after going in placement mode\n");
+	printf("\t Set target for fixed object with middle mouse (after enabling)\n");
 	printf("\t*-------------------------------------------------------*\n");
 	printf("\t|   'v': Toggle density/(v)elocity display              |\n");
 	printf("\t|   'o': V(o)rticity toggle                             |\n");
 	printf("\t|   'c': (C)lear the simulation                         |\n");
 	printf("\t|   'g': Draw (g)ridlines                               |\n");
 	printf("\t|   'd': Toggle smooth (d)rawing                        |\n");
-	printf("\t|   'e': Toggle (e)dge drawing                          |\n");
-	printf("\t|   'r': Cycle (r)igidbody drawing mode                 |\n");
+	printf("\t|   'e': Toggle (e)dge placement mode                   |\n");
+	printf("\t|   'b': Toggle rigidbody cell drawing -> (B)resenham   |\n");
+	printf("\t|   'r': Cycle (r)igidbody mode                         |\n");
+	printf("\t|   'f': Toggle (f)ixed object                          |\n");
 	printf("\t|   'p': (P)ause                                        |\n");
 	printf("\t|   '>': Step forward once (can be done while paused)   |\n");
 	printf("\t|   'q': (Q)uit                                         |\n");
@@ -631,26 +647,27 @@ int main(int argc, char** argv)
 	
 
 	Shape shape3 = Shape();
-	Vec2 offset = Vec2(0.7, 0.7);
-	shape3.points.push_back(offset+Vec2(0.045, 0.045));
-	shape3.points.push_back(offset+Vec2(0.045, 0.075));
-	shape3.points.push_back(offset+Vec2(0.055, 0.075));
-	shape3.points.push_back(offset+Vec2(0.055, 0.045));
-	shape3.centroid = offset+Vec2(0.05, 0.05);
+	Vec2 offset = Vec2(0.6, 0.6);
+	shape3.points.push_back(offset+Vec2(5*0.045, 5*0.045));
+	shape3.points.push_back(offset+Vec2(5*0.045, 5*0.075));
+	shape3.points.push_back(offset+Vec2(5*0.055, 5*0.075));
+	shape3.points.push_back(offset+Vec2(5*0.055, 5*0.045));
+	shape3.centroid = offset+Vec2(5*0.05, 5*0.05);
 	shape3.triangulation = {0, 1, 2,  0, 2, 3};
 	shape3.post_ctor();
 	rbs.push_back(new Rigidbody(shape3));
 
 
 	Shape shape4 = Shape();
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.01, 0.01));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.03, 0));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0.01, -0.01));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0, -0.03));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.01, -0.01));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.03, 0));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(-0.01, 0.01));
-	shape4.points.push_back(Vec2(0.05, 0.7) + Vec2(0, 0.03));
+	offset = Vec2(0.2, 0.7);
+	shape4.points.push_back(offset + Vec2(4* 0.01, 4* 0.01));
+	shape4.points.push_back(offset + Vec2(4* 0.03, 4*    0));
+	shape4.points.push_back(offset + Vec2(4* 0.01, 4*-0.01));
+	shape4.points.push_back(offset + Vec2(4*    0, 4*-0.03));
+	shape4.points.push_back(offset + Vec2(4*-0.01, 4*-0.01));
+	shape4.points.push_back(offset + Vec2(4*-0.03, 4*    0));
+	shape4.points.push_back(offset + Vec2(4*-0.01, 4* 0.01));
+	shape4.points.push_back(offset + Vec2(4*0,     4* 0.03));
 	shape4.centroid = Vec2(0.05, 0.7);
 	shape4.post_ctor();
 	rbs.push_back(new Rigidbody(shape4));
